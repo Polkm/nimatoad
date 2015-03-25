@@ -1,6 +1,6 @@
 import sdl2, glx
 
-var windowTitle* = "Nimmatoad"
+var windowTitle* = "Nimatoad"
 var screenWidth*: cint = 640
 var screenHeight*: cint = 480
 
