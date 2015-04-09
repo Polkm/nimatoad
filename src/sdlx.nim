@@ -16,7 +16,6 @@ proc limitFrameRate() =
     delay(frameTime - now) # Delay to maintain steady frame rate
   frameTime += targetFramePeriod
 
-
 proc draw*() =
   glx.draw()
   window.glSwapWindow() # Swap the front and back frame buffers (double buffering)

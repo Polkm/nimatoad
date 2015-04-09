@@ -1,13 +1,14 @@
-import os, opengl, glu, times, math
-import assimp
+import os, times, math
+import opengl, glu, assimp
+import matrix, vector
 
 type Unchecked* {.unchecked.}[T] = array[1,T]
 
 proc reshape*(newWidth: cint, newHeight: cint) =
-  glViewport(0, 0, newWidth, newHeight)   # Set the viewport to cover the new window
-  glMatrixMode(GL_PROJECTION)             # To operate on the projection matrix
-  glLoadIdentity()                        # Reset
-  gluPerspective(45.0, newWidth / newHeight, 0.1, 100.0)  # Enable perspective projection with fovy, aspect, zNear and zFar
+  glViewport(0, 0, newWidth, newHeight)
+  glMatrixMode(GL_PROJECTION)
+  glLoadIdentity()
+  gluPerspective(45.0, newWidth / newHeight, 0.1, 100.0)
 
 proc compileShader(program: GLuint, shdr: GLuint, file: string): GLuint =
   var src = readFile(file).cstring
@@ -31,18 +32,17 @@ proc shader*(vertexFile: string, fragmentFile: string): GLuint =
   glBindFragDataLocation(program, 0, "out_color")
   glLinkProgram(program)
   glUseProgram(program)
-  # Vertex data <-> attributes
-  var posAttrib = glGetAttribLocation(program, "in_position").GLuint
-  glEnableVertexAttribArray(posAttrib)
-  glVertexAttribPointer(posAttrib, 2, cGL_FLOAT, false,
-                        6 * sizeof(GLFloat).int32, nil)
 
-  var colAttrib = glGetAttribLocation(program, "in_color").GLuint
-  glEnableVertexAttribArray(colAttrib)
-  glVertexAttribPointer(colAttrib, 3, cGL_FLOAT, false,
-                        6 * sizeof(GLFloat).int32,
-                        cast[pointer](3 * sizeof(GLFloat)))
+  # var colAttrib = glGetAttribLocation(program, "in_color").GLuint
+  # glEnableVertexAttribArray(colAttrib)
+  # glVertexAttribPointer(colAttrib, 3, cGL_FLOAT, false,
+  #                       6 * sizeof(GLFloat).int32,
+  #                       cast[pointer](3 * sizeof(GLFloat)))
   return program
+
+proc bufferArray*(): GLuint =
+  glGenVertexArrays(1, addr result)
+  glBindVertexArray(result)
 
 # Buffers the given data to a VAO and returns it
 proc buffer*(kind: GLenum, size: GLsizeiptr, data): GLuint =
@@ -51,15 +51,16 @@ proc buffer*(kind: GLenum, size: GLsizeiptr, data): GLuint =
   var tmp = data
   glBufferData(kind, size, addr tmp, GL_STATIC_DRAW);
 
-  # var vertexBuffer: GLuint
-  # glGenBuffers(1, addr vertexBuffer)
-  # glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer)
-  # var tmp = data
-  # glBufferData(GL_ARRAY_BUFFER, sizeof(tmp).int32, addr tmp, GL_STATIC_DRAW)
+proc attrib*(pos: GLuint, size: GLint, kind: GLenum) =
+  glEnableVertexAttribArray(pos)
+  glVertexAttribPointer(pos, size, kind, false, 0.GLsizei, nil)
 
-proc model*(filename: string): GLuint =
+# Returns the proc used to draw the given model file.
+proc model*(filename: string): proc() =
   var scene = assimp.aiImportFile(filename, 0)
   var mesh = cast[ptr Unchecked[PMesh]](scene.meshes)[0]
+
+  var buffArray = bufferArray()
 
   var faces = cast[ptr Unchecked[TFace]](addr mesh.faces)
   var faceArray = newSeq[uint](mesh.faceCount * 3)
@@ -74,6 +75,15 @@ proc model*(filename: string): GLuint =
 
   var faceBuff = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint).int32 * mesh.faceCount * 3, faceArray)
 
+  var vertArray = cast[ptr Unchecked[float32]](addr mesh.vertices)
+  var vertBuff = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * mesh.vertexCount * 3, faceArray)
+  attrib(0, 3, cGL_FLOAT)
+
+  # The draw proc for this model
+  var offset: ptr int
+  return proc() =
+    glBindVertexArray(buffArray)
+    glDrawElements(GL_TRIANGLES, mesh.faceCount * 3, GL_UNSIGNED_INT, offset)
 
   # if (mesh->HasPositions()) {
   #     glGenBuffers(1, &buffer);
@@ -123,6 +133,8 @@ proc model*(filename: string): GLuint =
         #     glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, 0, 0, 0);
         # }
 
+var draws: seq[proc()] = @[]
+
 proc init*() =
   loadExtensions()
   glClearColor(0.0, 0.0, 0.0, 1.0)                  # Set background color to black and opaque
@@ -132,7 +144,13 @@ proc init*() =
   glShadeModel(GL_SMOOTH)                           # Enable smooth shading
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) # Nice perspective corrections
 
-  var model = model("models/hind.ply")
+  var view = identity().lookat(eye = vec3(0.0, 0.0, 0.0), org = vec3(1.0, 1.0, 0.0), up = vec3(0.0, 1.0, 0.0))
+  echo(view)
+  var proj = perspective(fov = 71, aspect = 9.0/16.0, near = 1.0, far = 10000.0)
+  echo(proj)
+
+
+  draws.add(model("models/hind.ply"))
   var vertices = [
      0.0'f32, 0.5, 0, 1, 0, 0,
      0.5,    -0.5, 0, 0, 1, 0,
@@ -143,5 +161,7 @@ proc init*() =
 
 proc draw*() =
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
+  for i in low(draws)..high(draws):
+    draws[i]()
 
   # glDrawArrays(GL_TRIANGLES, 0, 3)
