@@ -18,6 +18,7 @@ proc limitFrameRate() =
 
 proc draw*() =
   glx.draw()
+  # Render()
   window.glSwapWindow() # Swap the front and back frame buffers (double buffering)
 
 proc init*() =

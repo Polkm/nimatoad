@@ -1,14 +1,21 @@
 import os, times, math
 import opengl, glu, assimp
-import matrix, vector
+import matrix, vector, pointer_arithm
 
 type Unchecked* {.unchecked.}[T] = array[1,T]
 
-proc reshape*(newWidth: cint, newHeight: cint) =
-  glViewport(0, 0, newWidth, newHeight)
-  glMatrixMode(GL_PROJECTION)
-  glLoadIdentity()
-  gluPerspective(45.0, newWidth / newHeight, 0.1, 100.0)
+var draws: seq[proc()] = @[]
+var trans = identity()
+var view = lookat(eye = vec3(-0.2, 0.1, 1), target = vec3(0.9, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
+var proj = identity()
+
+proc reshape*(width: cint, height: cint) =
+  glViewport(0, 0, width, height)
+  proj = perspective(fov = 40.0, aspect = float(width) / float(height), near = 0.05, far = 10.0)
+
+  echo(trans)
+  echo(view)
+  echo(proj)
 
 proc compileShader(program: GLuint, shdr: GLuint, file: string): GLuint =
   var src = readFile(file).cstring
@@ -24,6 +31,11 @@ proc compileShader(program: GLuint, shdr: GLuint, file: string): GLuint =
   glAttachShader(program, shdr)
   return shdr
 
+proc attrib*(program: GLuint, name: string, size: GLint, kind: GLenum) =
+  let pos = glGetAttribLocation(program, name).GLuint
+  glEnableVertexAttribArray(pos)
+  glVertexAttribPointer(pos, size, kind, false, 0'i32, nil)
+
 proc shader*(vertexFile: string, fragmentFile: string): GLuint =
   var program = glCreateProgram()
   discard compileShader(program, glCreateShader(GL_VERTEX_SHADER), "src/shaders/" & vertexFile)
@@ -33,54 +45,76 @@ proc shader*(vertexFile: string, fragmentFile: string): GLuint =
   glLinkProgram(program)
   glUseProgram(program)
 
-  # var colAttrib = glGetAttribLocation(program, "in_color").GLuint
-  # glEnableVertexAttribArray(colAttrib)
-  # glVertexAttribPointer(colAttrib, 3, cGL_FLOAT, false,
-  #                       6 * sizeof(GLFloat).int32,
-  #                       cast[pointer](3 * sizeof(GLFloat)))
+  program.attrib("in_position", 3'i32, cGL_FLOAT)
+  # attrib(glGetAttribLocation(program, "in_color").GLuint, 3, cGL_FLOAT)
   return program
+
+proc uniformMat(program: GLuint, name: string, mat: ptr GLfloat) =
+  glUniformMatrix4fv(int32(glGetUniformLocation(program, name)), 1, false, mat)
+
+proc uniformDrawMats(program: GLuint, model, view, proj: ptr GLfloat) =
+  program.uniformMat("model", model)
+  program.uniformMat("view", view)
+  program.uniformMat("proj", proj)
 
 proc bufferArray*(): GLuint =
   glGenVertexArrays(1, addr result)
   glBindVertexArray(result)
 
 # Buffers the given data to a VAO and returns it
-proc buffer*(kind: GLenum, size: GLsizeiptr, data): GLuint =
+proc buffer*(kind: GLenum, size: GLsizeiptr, data: ptr): GLuint =
   glGenBuffers(1, addr result)
   glBindBuffer(kind, result)
-  var tmp = data
-  glBufferData(kind, size, addr tmp, GL_STATIC_DRAW);
-
-proc attrib*(pos: GLuint, size: GLint, kind: GLenum) =
-  glEnableVertexAttribArray(pos)
-  glVertexAttribPointer(pos, size, kind, false, 0.GLsizei, nil)
+  glBufferData(kind, size, data, GL_STATIC_DRAW);
 
 # Returns the proc used to draw the given model file.
 proc model*(filename: string): proc() =
   var scene = assimp.aiImportFile(filename, 0)
   var mesh = cast[ptr Unchecked[PMesh]](scene.meshes)[0]
+  # let mesh = scene.meshes.offset(0)
 
   var buffArray = bufferArray()
 
-  var faces = cast[ptr Unchecked[TFace]](addr mesh.faces)
-  var faceArray = newSeq[uint](mesh.faceCount * 3)
-  echo mesh.vertexCount
-  for i in 0..mesh.faceCount:
-    var fc = faces[i]
-    # var inds = fc.indices
-    var inds = cast[array[3, uint]](fc.indices)
-    faceArray[i] = inds[0]
-    faceArray[i + 1] = inds[1]
-    faceArray[i + 2] = inds[2]
+  var faceArray = newSeq[ptr cint](mesh.faceCount * 3)
+  # for ii in 0..mesh.faceCount:
+  #   let face = mesh.faces.offset(ii)
+  #   for iii in 0..face.indexCount:
+  #     echo cast[cint](face.indices.offset(iii))
 
-  var faceBuff = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint).int32 * mesh.faceCount * 3, faceArray)
+  # var faceArray = newSeq[ptr cint](mesh.faceCount * 3)
+  # for ii in 0..mesh.faceCount:
+  #   let face = mesh.faces.offset(ii)
+  #   let indiis = cast[ptr array[0..0xffffff, cint]](face.indices)
+  #
+  #   var faceMode: GLenum
+  #   case face.indexCount
+  #   of 1: faceMode = GL_POINTS
+  #   of 2: faceMode = GL_LINES
+  #   of 3: faceMode = GL_TRIANGLES
+  #   else: faceMode = GL_POLYGON
+  #
+  #   if (face.indexCount <= 3):
+  #     for iii in 0..face.indexCount:
+  #       echo face.indices[iii]
+
+  # var faces = cast[ptr Unchecked[TFace]](addr mesh.faces)
+  # var faceArray = newSeq[cint](mesh.faceCount * 3)
+  # echo mesh.vertexCount
+  # for i in 0..mesh.faceCount:
+  #   var fc = faces[i]
+    # var inds = fc.indices
+    # faceArray[i] = fc.indices[0]
+    # faceArray[i + 1] = inds[1]
+    # faceArray[i + 2] = inds[2]
+
+  var faceBuff = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint).int32 * mesh.faceCount * 3, addr(faceArray[0]))
 
   var vertArray = cast[ptr Unchecked[float32]](addr mesh.vertices)
-  var vertBuff = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * mesh.vertexCount * 3, faceArray)
-  attrib(0, 3, cGL_FLOAT)
+  var vertBuff = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * mesh.vertexCount * 3, addr(vertArray[0]))
 
   # The draw proc for this model
-  var offset: ptr int
+  var offsett = 0
+  var offset: ptr int = addr offsett
   return proc() =
     glBindVertexArray(buffArray)
     glDrawElements(GL_TRIANGLES, mesh.faceCount * 3, GL_UNSIGNED_INT, offset)
@@ -133,31 +167,108 @@ proc model*(filename: string): proc() =
         #     glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, 0, 0, 0);
         # }
 
-var draws: seq[proc()] = @[]
-
 proc init*() =
   loadExtensions()
   glClearColor(0.0, 0.0, 0.0, 1.0)                  # Set background color to black and opaque
   glClearDepth(1.0)                                 # Set background depth to farthest
-  glEnable(GL_DEPTH_TEST)                           # Enable depth testing for z-culling
-  glDepthFunc(GL_LEQUAL)                            # Set the type of depth-test
-  glShadeModel(GL_SMOOTH)                           # Enable smooth shading
-  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) # Nice perspective corrections
+  glEnable(GL_BLEND)
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  # glEnable(GL_DEPTH_TEST)                           # Enable depth testing for z-culling
+  glDisable(GL_DEPTH_TEST)
+  # glDepthFunc(GL_LEQUAL)                            # Set the type of depth-test
+  # glShadeModel(GL_SMOOTH)                           # Enable smooth shading
+  # glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) # Nice perspective corrections
 
-  var view = identity().lookat(eye = vec3(0.0, 0.0, 0.0), org = vec3(1.0, 1.0, 0.0), up = vec3(0.0, 1.0, 0.0))
-  echo(view)
-  var proj = perspective(fov = 71, aspect = 9.0/16.0, near = 1.0, far = 10000.0)
-  echo(proj)
-
-
-  draws.add(model("models/hind.ply"))
-  var vertices = [
-     0.0'f32, 0.5, 0, 1, 0, 0,
-     0.5,    -0.5, 0, 0, 1, 0,
-    -0.5,    -0.5, 0, 0, 0, 1
-  ]
-  # var buff = buffer(vertices)
   var shdr = shader("flat.vert", "flat.frag")
+  var vertices = [
+    0.0'f32,  0.0'f32,  0.0'f32,
+    1.0'f32,  0.0'f32,  0.0'f32,
+    1.0'f32,  1.0'f32,  0.0'f32,
+
+    1.0'f32,  1.0'f32,  0.0'f32,
+    1.0'f32,  0.0'f32,  0.0'f32,
+    1.0'f32,  0.0'f32,  1.0'f32
+  ]
+  var indices = [
+    0, 1, 2, 3, 4, 5
+  ]
+  var buffArray = bufferArray()
+  var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * vertices.len, addr(vertices[0]))
+  var buffInd = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(GL_UNSIGNED_INT) * indices.len, addr(indices[0]))
+  var offsett = 0
+  var offset: ptr int = addr offsett
+  draws.add(proc() =
+    # view = lookat(eye = vec3(0.0, 0.0, 0.0), target = vec3(10.0, 10.0, 0.0), up = vec3(0.0, 1.0, 0.0))
+    glUseProgram(shdr)
+    shdr.uniformDrawMats(addr(trans.m[0]), addr(view.m[0]), addr(proj.m[0]))
+
+    # glBindVertexArray(buffArray)
+    # glBindBuffer(GL_ARRAY_BUFFER, buffVert)
+    # glDrawArrays(GL_TRIANGLES, 0, 6)
+    # glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[pointer](0))
+
+    glBegin(GL_TRIANGLES)        # Begin drawing of triangles
+    var n = 0.1
+    # Top face (y = 1.0f)
+    glColor3f(0.0, n, 0.0)     # Green
+    glVertex3f( n, n, -n)
+    glVertex3f(-n, n, -n)
+    glVertex3f(-n, n,  n)
+    glVertex3f( n, n,  n)
+    glVertex3f( n, n, -n)
+    glVertex3f(-n, n,  n)
+
+    # Bottom face (y = -nf)
+    glColor3f(n, 0.5, 0.0)     # Orange
+    glVertex3f( n, -n,  n)
+    glVertex3f(-n, -n,  n)
+    glVertex3f(-n, -n, -n)
+    glVertex3f( n, -n, -n)
+    glVertex3f( n, -n,  n)
+    glVertex3f(-n, -n, -n)
+
+    # Front face  (z = nf)
+    glColor3f(n, 0.0, 0.0)     # Red
+    glVertex3f( n,  n, n)
+    glVertex3f(-n,  n, n)
+    glVertex3f(-n, -n, n)
+    glVertex3f( n, -n, n)
+    glVertex3f( n,  n, n)
+    glVertex3f(-n, -n, n)
+
+    # Back face (z = -nf)
+    glColor3f(n, n, 0.0)     # Yellow
+    glVertex3f( n, -n, -n)
+    glVertex3f(-n, -n, -n)
+    glVertex3f(-n,  n, -n)
+    glVertex3f( n,  n, -n)
+    glVertex3f( n, -n, -n)
+    glVertex3f(-n,  n, -n)
+
+    # Left face (x = -nf)
+    glColor3f(0.0, 0.0, n)     # Blue
+    glVertex3f(-n,  n,  n)
+    glVertex3f(-n,  n, -n)
+    glVertex3f(-n, -n, -n)
+    glVertex3f(-n, -n,  n)
+    glVertex3f(-n,  n,  n)
+    glVertex3f(-n, -n, -n)
+
+    # Right face (x = nf)
+    glColor3f(n, 0.0, n)    # Magenta
+    glVertex3f(n,  n, -n)
+    glVertex3f(n,  n,  n)
+    glVertex3f(n, -n,  n)
+    glVertex3f(n, -n, -n)
+    glVertex3f(n,  n, -n)
+    glVertex3f(n, -n,  n)
+
+    glEnd()  # End of drawing
+
+
+    # glUseProgram(0)
+  )
+  # draws.add(model("models/hind.ply"))
 
 proc draw*() =
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
