@@ -16,10 +16,6 @@ proc limitFrameRate() =
     delay(frameTime - now) # Delay to maintain steady frame rate
   frameTime += targetFramePeriod
 
-proc draw*() =
-  glx.draw()
-  window.glSwapWindow() # Swap the front and back frame buffers (double buffering)
-
 proc init*() =
   discard sdl2.init(INIT_EVERYTHING)
   window = createWindow(windowTitle, 100, 100, screenWidth, screenHeight, SDL_WINDOW_OPENGL or SDL_WINDOW_RESIZABLE)
@@ -27,6 +23,7 @@ proc init*() =
   glx.init()
   glx.reshape(screenWidth, screenHeight)
 
+proc run*() =
   var
     evt = sdl2.defaultEvent
     runGame = true
@@ -43,8 +40,10 @@ proc init*() =
           let newHeight = windowEvent.data2
           glx.reshape(newWidth, newHeight)
 
-    draw()
+    glx.draw()
+    window.glSwapWindow()
 
     limitFrameRate()
 
+proc destroy*() =
   destroy sdlx.window
