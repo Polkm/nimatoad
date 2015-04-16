@@ -6,16 +6,12 @@ type Unchecked* {.unchecked.}[T] = array[1,T]
 
 var draws: seq[proc()] = @[]
 var trans = identity()
-var view = lookat(eye = vec3(-0.2, 0.1, 1), target = vec3(0.9, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
+var view = lookat(eye = vec3(-0.2, 0.1, 1), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
 var proj = identity()
 
 proc reshape*(width: cint, height: cint) =
   glViewport(0, 0, width, height)
   proj = perspective(fov = 40.0, aspect = float(width) / float(height), near = 0.05, far = 10.0)
-
-  echo(trans)
-  echo(view)
-  echo(proj)
 
 proc compileShader(program: GLuint, shdr: GLuint, file: string): GLuint =
   var src = readFile(file).cstring
@@ -169,104 +165,38 @@ proc model*(filename: string): proc() =
 
 proc init*() =
   loadExtensions()
-  glClearColor(0.0, 0.0, 0.0, 1.0)                  # Set background color to black and opaque
-  glClearDepth(1.0)                                 # Set background depth to farthest
+  glClearColor(0.0, 0.0, 0.0, 1.0)
+  glClearDepth(1.0)
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  # glEnable(GL_DEPTH_TEST)                           # Enable depth testing for z-culling
-  glDisable(GL_DEPTH_TEST)
-  # glDepthFunc(GL_LEQUAL)                            # Set the type of depth-test
-  # glShadeModel(GL_SMOOTH)                           # Enable smooth shading
-  # glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) # Nice perspective corrections
+  glEnable(GL_DEPTH_TEST)
+  glDepthFunc(GL_LEQUAL)
 
   var shdr = shader("flat.vert", "flat.frag")
-  var vertices = [
-    0.0'f32,  0.0'f32,  0.0'f32,
-    1.0'f32,  0.0'f32,  0.0'f32,
-    1.0'f32,  1.0'f32,  0.0'f32,
 
-    1.0'f32,  1.0'f32,  0.0'f32,
-    1.0'f32,  0.0'f32,  0.0'f32,
-    1.0'f32,  0.0'f32,  1.0'f32
+  var n = 0.1'f32
+  var vertices = [
+     n, n, -n,   -n, n, -n,   -n, n,  n,   n, n,  n,
+     n, -n, -n,   -n, -n, -n,   -n, -n,  n,   n, -n,  n,
   ]
   var indices = [
-    0, 1, 2, 3, 4, 5
+    0'u32, 1, 2, 2, 3, 0,
+    4, 7, 6, 6, 5, 4
   ]
-  var buffArray = bufferArray()
-  var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * vertices.len, addr(vertices[0]))
-  var buffInd = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(GL_UNSIGNED_INT) * indices.len, addr(indices[0]))
-  var offsett = 0
-  var offset: ptr int = addr offsett
+  var buffArray = 0'u32
+  glGenVertexArrays(1, addr buffArray)
+  glBindVertexArray(buffArray)
+  var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(vertices).int32, addr vertices[0])
+  shdr.attrib("in_position", 3'i32, cGL_FLOAT)
+  var buffInd = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices).int32, addr indices[0])
+
   draws.add(proc() =
     # view = lookat(eye = vec3(0.0, 0.0, 0.0), target = vec3(10.0, 10.0, 0.0), up = vec3(0.0, 1.0, 0.0))
     glUseProgram(shdr)
-    shdr.uniformDrawMats(addr(trans.m[0]), addr(view.m[0]), addr(proj.m[0]))
+    shdr.uniformDrawMats(addr trans.m[0], addr view.m[0], addr proj.m[0])
 
-    # glBindVertexArray(buffArray)
-    # glBindBuffer(GL_ARRAY_BUFFER, buffVert)
-    # glDrawArrays(GL_TRIANGLES, 0, 6)
-    # glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, cast[pointer](0))
-
-    glBegin(GL_TRIANGLES)        # Begin drawing of triangles
-    var n = 0.1
-    # Top face (y = 1.0f)
-    glColor3f(0.0, n, 0.0)     # Green
-    glVertex3f( n, n, -n)
-    glVertex3f(-n, n, -n)
-    glVertex3f(-n, n,  n)
-    glVertex3f( n, n,  n)
-    glVertex3f( n, n, -n)
-    glVertex3f(-n, n,  n)
-
-    # Bottom face (y = -nf)
-    glColor3f(n, 0.5, 0.0)     # Orange
-    glVertex3f( n, -n,  n)
-    glVertex3f(-n, -n,  n)
-    glVertex3f(-n, -n, -n)
-    glVertex3f( n, -n, -n)
-    glVertex3f( n, -n,  n)
-    glVertex3f(-n, -n, -n)
-
-    # Front face  (z = nf)
-    glColor3f(n, 0.0, 0.0)     # Red
-    glVertex3f( n,  n, n)
-    glVertex3f(-n,  n, n)
-    glVertex3f(-n, -n, n)
-    glVertex3f( n, -n, n)
-    glVertex3f( n,  n, n)
-    glVertex3f(-n, -n, n)
-
-    # Back face (z = -nf)
-    glColor3f(n, n, 0.0)     # Yellow
-    glVertex3f( n, -n, -n)
-    glVertex3f(-n, -n, -n)
-    glVertex3f(-n,  n, -n)
-    glVertex3f( n,  n, -n)
-    glVertex3f( n, -n, -n)
-    glVertex3f(-n,  n, -n)
-
-    # Left face (x = -nf)
-    glColor3f(0.0, 0.0, n)     # Blue
-    glVertex3f(-n,  n,  n)
-    glVertex3f(-n,  n, -n)
-    glVertex3f(-n, -n, -n)
-    glVertex3f(-n, -n,  n)
-    glVertex3f(-n,  n,  n)
-    glVertex3f(-n, -n, -n)
-
-    # Right face (x = nf)
-    glColor3f(n, 0.0, n)    # Magenta
-    glVertex3f(n,  n, -n)
-    glVertex3f(n,  n,  n)
-    glVertex3f(n, -n,  n)
-    glVertex3f(n, -n, -n)
-    glVertex3f(n,  n, -n)
-    glVertex3f(n, -n,  n)
-
-    glEnd()  # End of drawing
-
-
-    # glUseProgram(0)
+    glBindVertexArray(buffArray)
+    glDrawElements(GL_TRIANGLES, indices.len.int32, GL_UNSIGNED_INT, nil)
   )
   # draws.add(model("models/hind.ply"))
 
