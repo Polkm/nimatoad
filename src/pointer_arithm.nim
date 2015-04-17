@@ -19,7 +19,7 @@ proc alloc* [A](num = 1): ptr A {.inline.} =
 proc `[]`*[A](some: ptr A; idx: int): var A {.inline.} =
   ## use offset() for tuple or array ptrs, this will not works
   some.offset(idx)[]
-  
+
 proc `[]=`*[A](some: ptr A; idx: int; val: A) {.inline.} =
   (some[idx]) = val
 
