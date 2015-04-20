@@ -1,6 +1,7 @@
 #version 130
 
 in vec3 in_position;
+
 //in vec4 in_color;
 //in vec2 in_uv;
 
