@@ -300,6 +300,8 @@ proc hasFaces*(some: PMesh): bool {.inline.} = (some.faceCount > 0 and
   not some.faces.isNil)
 proc hasNormals*(some: PMesh): bool {.inline.} = (some.vertexCount > 0 and
   not some.normals.isNil)
+proc hasUVCords*(some: PMesh): bool {.inline.} = (some.vertexCount > 0 and
+  not some.texCoords[0].isNil)
 
 
 

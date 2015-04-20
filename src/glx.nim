@@ -20,8 +20,7 @@ proc uniformDrawMats(program: GLuint, model, view, proj: ptr GLfloat) =
   program.uniformMat("view", view)
   program.uniformMat("proj", proj)
 
-proc attrib*(program: GLuint, name: string, size: GLint, kind: GLenum) =
-  let pos = glGetAttribLocation(program, name).GLuint
+proc attrib*(pos: uint32, size: GLint, kind: GLenum) =
   glEnableVertexAttribArray(pos)
   glVertexAttribPointer(pos, size, kind, false, 0'i32, nil)
 
@@ -60,17 +59,31 @@ proc model*(filename: string, shdr: GLuint, trans: ptr Mat4): proc() =
       vertices[i * 3 + 1] = vert.y
       vertices[i * 3 + 2] = vert.z
     var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * vertices.len.int32, addr vertices[0])
-    shdr.attrib("in_position", 3'i32, cGL_FLOAT)
+    let pos = glGetAttribLocation(shdr, "in_position").GLuint
+    attrib(pos, 3'i32, cGL_FLOAT)
 
   if (mesh.hasNormals):
     var normals = newSeq[float32](mesh.vertexCount * 3)
     for i in 0..(mesh.vertexCount - 1).int:
-      var vert = mesh.normals.offset(i)[].TVector3d
-      normals[i * 3 + 0] = vert.x
-      normals[i * 3 + 1] = vert.y
-      normals[i * 3 + 2] = vert.z
+      var norm = mesh.normals.offset(i)[].TVector3d
+      normals[i * 3 + 0] = norm.x
+      normals[i * 3 + 1] = norm.y
+      normals[i * 3 + 2] = norm.z
     var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * normals.len.int32, addr normals[0])
-    shdr.attrib("in_normal", 3'i32, cGL_FLOAT)
+    let pos = glGetAttribLocation(shdr, "in_normal").GLuint
+    attrib(1, 3'i32, cGL_FLOAT)
+
+  if (mesh.hasUVCords):
+    var texCoords = newSeq[float32](mesh.vertexCount * 3)
+    for i in 0..(mesh.vertexCount - 1).int:
+      var uv = mesh.texCoords[0].offset(i)[].TVector3d
+      texCoords[i * 3 + 0] = uv.x
+      texCoords[i * 3 + 1] = uv.y
+      texCoords[i * 3 + 2] = uv.z
+    var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * texCoords.len.int32, addr texCoords[0])
+    let pos = glGetAttribLocation(shdr, "in_uv").GLuint
+    attrib(2, 2'i32, cGL_FLOAT)
+
 
   return proc() =
     glUseProgram(shdr)
@@ -101,9 +114,6 @@ proc shader*(vertexFile: string, fragmentFile: string): GLuint =
   glBindFragDataLocation(program, 0, "out_color")
   glLinkProgram(program)
   glUseProgram(program)
-
-  program.attrib("in_position", 3'i32, cGL_FLOAT)
-  # attrib(glGetAttribLocation(program, "in_color").GLuint, 3, cGL_FLOAT)
   return program
 
 proc init*() =
