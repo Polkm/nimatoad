@@ -6,7 +6,6 @@ import parsers
 type Unchecked* {.unchecked.}[T] = array[1, T]
 
 var draws*: seq[proc()] = @[]
-var trans = identity()
 var view = lookat(eye = vec3(-2, 8, 20), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
 var proj = identity()
 
@@ -37,7 +36,7 @@ proc buffer*(kind: GLenum, size: GLsizeiptr, data: ptr): GLuint =
   glBufferData(kind, size, data, GL_STATIC_DRAW);
 
 # Returns the proc used to draw the given model file.
-proc model*(filename: string, shdr: GLuint): proc() =
+proc model*(filename: string, shdr: GLuint, trans: ptr Mat4): proc() =
   var scene = assimp.aiImportFile(filename, aiProcessPreset_TargetRealtime_Quality)
 
   # for m in 0..scene.meshCount - 1:
@@ -81,7 +80,7 @@ proc model*(filename: string, shdr: GLuint): proc() =
   return proc() =
     # view = lookat(eye = vec3(0.0, 0.0, 0.0), target = vec3(10.0, 10.0, 0.0), up = vec3(0.0, 1.0, 0.0))
     glUseProgram(shdr)
-    shdr.uniformDrawMats(addr trans.m[0], addr view.m[0], addr proj.m[0])
+    shdr.uniformDrawMats((trans[].m[0]).addr, addr view.m[0], addr proj.m[0])
 
     glBindVertexArray(buffArray)
     glDrawElements(GL_TRIANGLES, indices.len.int32, GL_UNSIGNED_INT, nil)
@@ -235,53 +234,12 @@ proc trect*(iX,iY,iW,iH: float, colr,colg,colb,cola: float, fileName: string): p
 
 
 
-
-
-
-  # var faceArray = newSeq[ptr cint](mesh.faceCount * 3)
-  # for ii in 0..mesh.faceCount:
-  #   let face = mesh.faces.offset(ii)
-  #   for iii in 0..face.indexCount:
-  #     echo cast[cint](face.indices.offset(iii))
-
-  # var faceArray = newSeq[ptr cint](mesh.faceCount * 3)
-  # for ii in 0..mesh.faceCount:
-  #   let face = mesh.faces.offset(ii)
-  #   let indiis = cast[ptr array[0..0xffffff, cint]](face.indices)
+  # // buffer for faces
+  # glGenBuffers(1, &buffer);
+  # glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+  # glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * mesh->mNumFaces * 3, faceArray, GL_STATIC_DRAW);
   #
-  #   var faceMode: GLenum
-  #   case face.indexCount
-  #   of 1: faceMode = GL_POINTS
-  #   of 2: faceMode = GL_LINES
-  #   of 3: faceMode = GL_TRIANGLES
-  #   else: faceMode = GL_POLYGON
-  #
-  #   if (face.indexCount <= 3):
-  #     for iii in 0..face.indexCount:
-  #       echo face.indices[iii]
-
-  # var faces = cast[ptr Unchecked[TFace]](addr mesh.faces)
-  # var faceArray = newSeq[cint](mesh.faceCount * 3)
-  # echo mesh.vertexCount
-  # for i in 0..mesh.faceCount:
-  #   var fc = faces[i]
-    # var inds = fc.indices
-    # faceArray[i] = fc.indices[0]
-    # faceArray[i + 1] = inds[1]
-    # faceArray[i + 2] = inds[2]
-
-  # var faceBuff = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint).int32 * mesh.faceCount * 3, addr(faceArray[0]))
-  #
-  # var vertArray = cast[ptr Unchecked[float32]](addr mesh.vertices)
-  # var vertBuff = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * mesh.vertexCount * 3, addr(vertArray[0]))
-  #
-  # # The draw proc for this model
-  # var offsett = 0
-  # var offset: ptr int = addr offsett
-  # return proc() =
-  #   glBindVertexArray(buffArray)
-  #   glDrawElements(GL_TRIANGLES, mesh.faceCount * 3, GL_UNSIGNED_INT, offset)
-
+  # // buffer for vertex positions
   # if (mesh->HasPositions()) {
   #     glGenBuffers(1, &buffer);
   #     glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -289,43 +247,28 @@ proc trect*(iX,iY,iW,iH: float, colr,colg,colb,cola: float, fileName: string): p
   #     glEnableVertexAttribArray(vertexLoc);
   #     glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
   # }
-
-
-        # // buffer for faces
-        # glGenBuffers(1, &buffer);
-        # glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
-        # glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * mesh->mNumFaces * 3, faceArray, GL_STATIC_DRAW);
-        #
-        # // buffer for vertex positions
-        # if (mesh->HasPositions()) {
-        #     glGenBuffers(1, &buffer);
-        #     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        #     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->mNumVertices, mesh->mVertices, GL_STATIC_DRAW);
-        #     glEnableVertexAttribArray(vertexLoc);
-        #     glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-        # }
-        #
-        # // buffer for vertex normals
-        # if (mesh->HasNormals()) {
-        #     glGenBuffers(1, &buffer);
-        #     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        #     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->mNumVertices, mesh->mNormals, GL_STATIC_DRAW);
-        #     glEnableVertexAttribArray(normalLoc);
-        #     glVertexAttribPointer(normalLoc, 3, GL_FLOAT, 0, 0, 0);
-        # }
-        #
-        # // buffer for vertex texture coordinates
-        # if (mesh->HasTextureCoords(0)) {
-        #     float *texCoords = (float *)malloc(sizeof(float)*2*mesh->mNumVertices);
-        #     for (uint k = 0; k < mesh->mNumVertices; ++k) {
-        #
-        #         texCoords[k*2]   = mesh->mTextureCoords[0][k].x;
-        #         texCoords[k*2+1] = mesh->mTextureCoords[0][k].y;
-        #
-        #     }
-        #     glGenBuffers(1, &buffer);
-        #     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        #     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->mNumVertices, texCoords, GL_STATIC_DRAW);
-        #     glEnableVertexAttribArray(texCoordLoc);
-        #     glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, 0, 0, 0);
-        # }
+  #
+  # // buffer for vertex normals
+  # if (mesh->HasNormals()) {
+  #     glGenBuffers(1, &buffer);
+  #     glBindBuffer(GL_ARRAY_BUFFER, buffer);
+  #     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->mNumVertices, mesh->mNormals, GL_STATIC_DRAW);
+  #     glEnableVertexAttribArray(normalLoc);
+  #     glVertexAttribPointer(normalLoc, 3, GL_FLOAT, 0, 0, 0);
+  # }
+  #
+  # // buffer for vertex texture coordinates
+  # if (mesh->HasTextureCoords(0)) {
+  #     float *texCoords = (float *)malloc(sizeof(float)*2*mesh->mNumVertices);
+  #     for (uint k = 0; k < mesh->mNumVertices; ++k) {
+  #
+  #         texCoords[k*2]   = mesh->mTextureCoords[0][k].x;
+  #         texCoords[k*2+1] = mesh->mTextureCoords[0][k].y;
+  #
+  #     }
+  #     glGenBuffers(1, &buffer);
+  #     glBindBuffer(GL_ARRAY_BUFFER, buffer);
+  #     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->mNumVertices, texCoords, GL_STATIC_DRAW);
+  #     glEnableVertexAttribArray(texCoordLoc);
+  #     glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, 0, 0, 0);
+  # }
