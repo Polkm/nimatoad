@@ -41,49 +41,43 @@ proc model*(filename: string, shdr: GLuint, trans: ptr Mat4): proc() =
 
   # for m in 0..scene.meshCount - 1:
   var mesh = scene.meshes.offset(0)[]
-  # let mesh = scene.meshes.offset(0)
-
-  # let n = 1'f32
-  # var vertices = [
-  #    n, n, -n,   -n, n, -n,   -n, n,  n,   n, n,  n,
-  #    n, -n, -n,   -n, -n, -n,   -n, -n,  n,   n, -n,  n,
-  # ]
-  var vertices = newSeq[float32](mesh.vertexCount * 3)
-  # echo($mesh.vertexCount)
-  # let castVerts = cast[Unchecked[float32]](mesh.vertices)
-  for i in 0..(mesh.vertexCount - 1).int:
-    var vert = mesh.vertices.offset(i)[].TVector3d
-    vertices[i * 3 + 0] = vert.x
-    vertices[i * 3 + 1] = vert.y
-    vertices[i * 3 + 2] = vert.z
-    # echo($i & " " & $vert.x & " " & $vert.y & " " & $vert.z)
-  # var indices = [
-  #   0'u32, 1, 2,   2, 3, 0,
-  #   4, 7, 6,   6, 5, 4
-  # ]
-  # echo($(mesh.faceCount))
-
-  var indices = newSeq[uint32](mesh.faceCount * 3)
-  for i in 0..mesh.faceCount - 1:
-    # echo($(faces.offset(i)[].indexCount))
-    for ii in 0..2:
-      indices[i * 3 + ii] = (mesh.faces[i].indices[ii] + 0).uint32
-      # echo($(indices[i * 3 + ii]))
-
-    # echo($(vertices.len))
 
   var buffArray = bufferArray()
-  var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * vertices.len.int32, addr vertices[0])
-  shdr.attrib("in_position", 3'i32, cGL_FLOAT)
-  var buffInd = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32).int32 * indices.len.int32, addr indices[0])
+  var triangles = 0;
+  if (mesh.hasFaces):
+    var indices = newSeq[uint32](mesh.faceCount * 3)
+    for i in 0..mesh.faceCount - 1:
+      for ii in 0..2:
+        indices[i * 3 + ii] = (mesh.faces[i].indices[ii] + 0).uint32
+    triangles = indices.len
+    var buffInd = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32).int32 * triangles.int32, addr indices[0])
+
+  if (mesh.hasPositions):
+    var vertices = newSeq[float32](mesh.vertexCount * 3)
+    for i in 0..(mesh.vertexCount - 1).int:
+      var vert = mesh.vertices.offset(i)[].TVector3d
+      vertices[i * 3 + 0] = vert.x
+      vertices[i * 3 + 1] = vert.y
+      vertices[i * 3 + 2] = vert.z
+    var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * vertices.len.int32, addr vertices[0])
+    shdr.attrib("in_position", 3'i32, cGL_FLOAT)
+
+  if (mesh.hasNormals):
+    var normals = newSeq[float32](mesh.vertexCount * 3)
+    for i in 0..(mesh.vertexCount - 1).int:
+      var vert = mesh.normals.offset(i)[].TVector3d
+      normals[i * 3 + 0] = vert.x
+      normals[i * 3 + 1] = vert.y
+      normals[i * 3 + 2] = vert.z
+    var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * normals.len.int32, addr normals[0])
+    shdr.attrib("in_normal", 3'i32, cGL_FLOAT)
 
   return proc() =
-    # view = lookat(eye = vec3(0.0, 0.0, 0.0), target = vec3(10.0, 10.0, 0.0), up = vec3(0.0, 1.0, 0.0))
     glUseProgram(shdr)
     shdr.uniformDrawMats((trans[].m[0]).addr, addr view.m[0], addr proj.m[0])
 
     glBindVertexArray(buffArray)
-    glDrawElements(GL_TRIANGLES, indices.len.int32, GL_UNSIGNED_INT, nil)
+    glDrawElements(GL_TRIANGLES, triangles.int32, GL_UNSIGNED_INT, nil)
 
 proc compileShader(program: GLuint, shdr: GLuint, file: string): GLuint =
   var src = readFile(file).cstring

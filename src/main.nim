@@ -5,7 +5,6 @@ sdlx.init()
 var shdr = shader("flat.vert", "flat.frag")
 # var trans = identity()
 var trans = lookat(eye = vec3(0, -2, 0), target = vec3(0, -100, 100), up = vec3(0, 1, 0))
-echo($trans)
 addDraw(model("models/hind.ply", shdr, trans.addr))
 
 addDraw(rect(10,20,500,450, 0.8,0.2,0.2,1))
