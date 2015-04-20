@@ -6,7 +6,7 @@ type Unchecked* {.unchecked.}[T] = array[1, T]
 
 var draws*: seq[proc()] = @[]
 var trans = identity()
-var view = lookat(eye = vec3(-0.0, 0, 5), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
+var view = lookat(eye = vec3(-2, 8, 20), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
 var proj = identity()
 
 proc addDraw*(draw: proc()) =
@@ -37,8 +37,12 @@ proc buffer*(kind: GLenum, size: GLsizeiptr, data: ptr): GLuint =
 
 # Returns the proc used to draw the given model file.
 proc model*(filename: string, shdr: GLuint): proc() =
-  let scene = assimp.aiImportFile(filename, 0)
-  let mesh = scene.meshes.offset(0)[].PMesh
+  var scene = assimp.aiImportFile(filename, aiProcessPreset_TargetRealtime_Quality)
+
+
+
+  # for m in 0..scene.meshCount - 1:
+  var mesh = scene.meshes.offset(0)[]
   # let mesh = scene.meshes.offset(0)
 
   # let n = 1'f32
@@ -47,33 +51,33 @@ proc model*(filename: string, shdr: GLuint): proc() =
   #    n, -n, -n,   -n, -n, -n,   -n, -n,  n,   n, -n,  n,
   # ]
   var vertices = newSeq[float32](mesh.vertexCount * 3)
-  for i in 0..mesh.vertexCount - 1:
-    let vert = mesh.vertices.offset(i)[].TVector3d
+  # echo($mesh.vertexCount)
+  # let castVerts = cast[Unchecked[float32]](mesh.vertices)
+  for i in 0..(mesh.vertexCount - 1).int:
+    var vert = mesh.vertices.offset(i)[].TVector3d
     vertices[i * 3 + 0] = vert.x
     vertices[i * 3 + 1] = vert.y
     vertices[i * 3 + 2] = vert.z
-    # echo($(vertices[i * 3 + 0]))
+    # echo($i & " " & $vert.x & " " & $vert.y & " " & $vert.z)
   # var indices = [
   #   0'u32, 1, 2,   2, 3, 0,
   #   4, 7, 6,   6, 5, 4
   # ]
-  echo($(mesh.faceCount))
+  # echo($(mesh.faceCount))
 
   var indices = newSeq[uint32](mesh.faceCount * 3)
-  var faces = mesh.faces
   for i in 0..mesh.faceCount - 1:
-    var indis = faces.offset(i)[].indices
     # echo($(faces.offset(i)[].indexCount))
     for ii in 0..2:
-      indices[i * 3 + ii] = indis.offset(ii)[].uint32
+      indices[i * 3 + ii] = (mesh.faces[i].indices[ii] + 0).uint32
       # echo($(indices[i * 3 + ii]))
+
+    # echo($(vertices.len))
 
   var buffArray = bufferArray()
   var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * vertices.len.int32, addr vertices[0])
   shdr.attrib("in_position", 3'i32, cGL_FLOAT)
   var buffInd = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32).int32 * indices.len.int32, addr indices[0])
-
-  # dealloc(indices)
 
   return proc() =
     # view = lookat(eye = vec3(0.0, 0.0, 0.0), target = vec3(10.0, 10.0, 0.0), up = vec3(0.0, 1.0, 0.0))
@@ -81,7 +85,7 @@ proc model*(filename: string, shdr: GLuint): proc() =
     shdr.uniformDrawMats(addr trans.m[0], addr view.m[0], addr proj.m[0])
 
     glBindVertexArray(buffArray)
-    glDrawElements(GL_TRIANGLES, 32.int32, GL_UNSIGNED_INT, nil)
+    glDrawElements(GL_TRIANGLES, indices.len.int32, GL_UNSIGNED_INT, nil)
 
 proc compileShader(program: GLuint, shdr: GLuint, file: string): GLuint =
   var src = readFile(file).cstring
@@ -117,8 +121,8 @@ proc init*() =
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   # glEnable(GL_DEPTH_TEST)
-  # glEnable(GL_CULL_FACE)
-  glDepthFunc(GL_LEQUAL)
+  glDisable(GL_CULL_FACE)
+  # glDepthFunc(GL_LEQUAL)
 
 proc draw*() =
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)

@@ -35,6 +35,8 @@ const
   AI_MAX_NUMBER_OF_TEXTURECOORDS = 0x8
   MAXLEN_AISTRING = 1024
 type
+  UncheckedArray* {.unchecked.} [T] = array[1,T]
+
   PNode* = ptr TNode
   TNode* {.pure.} = object
     name*: AIstring
@@ -57,7 +59,7 @@ type
     colors*: array[0..AI_MAX_NUMBER_OF_COLOR_SETS-1, ptr TColor4d]
     texCoords*: array[0..AI_MAX_NUMBER_OF_TEXTURECOORDS-1, ptr TVector3d]
     numUVcomponents*: array[0..AI_MAX_NUMBER_OF_TEXTURECOORDS-1, cint]
-    faces*: PFace
+    faces*: ptr UncheckedArray[TFace]
     boneCount*: cint
     bones*: ptr PBone
     materialIndex*: cint
@@ -187,7 +189,7 @@ type
   PFace* = ptr TFace
   TFace* = object
     indexCount*: cint
-    indices*: ptr cint
+    indices*: ptr UncheckedArray[cint]
 
   AIstring* = object
     length*: csize

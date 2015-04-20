@@ -3,7 +3,7 @@ import sdlx, glx
 sdlx.init()
 
 var shdr = shader("flat.vert", "flat.frag")
-addDraw(model("models/icosahedron.obj", shdr))
+addDraw(model("models/hind.ply", shdr))
 
 sdlx.run()
 
