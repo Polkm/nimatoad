@@ -108,8 +108,8 @@ proc compileShader(program: GLuint, shdr: GLuint, file: string): GLuint =
 
 proc shader*(vertexFile: string, fragmentFile: string): GLuint =
   var program = glCreateProgram()
-  discard compileShader(program, glCreateShader(GL_VERTEX_SHADER), "src/shaders/" & vertexFile)
-  discard compileShader(program, glCreateShader(GL_FRAGMENT_SHADER), "src/shaders/" & fragmentFile)
+  discard compileShader(program, glCreateShader(GL_VERTEX_SHADER), "shaders/" & vertexFile)
+  discard compileShader(program, glCreateShader(GL_FRAGMENT_SHADER), "shaders/" & fragmentFile)
 
   glBindFragDataLocation(program, 0, "out_color")
   glLinkProgram(program)
