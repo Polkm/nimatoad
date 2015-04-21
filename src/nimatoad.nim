@@ -5,7 +5,7 @@ sdlx.init()
 var shdr = shader("flat.vert", "flat.frag")
 var trans = identity()
 # var trans = lookat(eye = vec3(0, -2, 0), target = vec3(0, -100, 100), up = vec3(0, 1, 0))
-addDraw(model("models/station_alpha.ply", shdr, trans.addr, "bmps/metal1.bmp"))
+addDraw(model("models/station1.ply", shdr, trans.addr, "bmps/metal2.bmp"))
 # addDraw(model("models/texturedcube.obj", shdr, trans.addr, "bmps/notbadd.bmp"))
 
 let a = rect(10,20,500,450, 0.8,0.2,0.2,1)
@@ -19,8 +19,8 @@ proc drwFunc() =
   b()
   c()
 
-#addDraw(makeScreen(panel, drwFunc))
-#addDraw(orect(50,30,413,397, 0.2,0.2,0.2,1))
+# addDraw(makeScreen(panel, drwFunc))
+# addDraw(orect(50,30,413,397, 0.2,0.2,0.2,1))
 
 sdlx.run()
 

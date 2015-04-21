@@ -1,6 +1,6 @@
 import opengl, matrix, vector
 
-var pos = vec3(0, 0, 2)
+var pos = vec3(0, 0.5, 4)
 var view = identity()
 var proj = identity()
 
@@ -11,7 +11,7 @@ cameraPoint(pos, vec3(0, 0, 0))
 echo($view)
 
 proc cameraAspect*(aspect: float) =
-  proj = perspective(fov = 70.0, aspect = aspect, near = 0.05, far = 10000.0)
+  proj = perspective(fov = 40.0, aspect = aspect, near = 0.05, far = 10000.0)
 
 proc cameraUniforms*(program: uint32) =
   glUniformMatrix4fv(glGetUniformLocation(program, "view").int32, 1, false, view.m[0].addr)
