@@ -1,16 +1,23 @@
 #version 130
 
-uniform vec3 camera_pos = vec3(1, 8, 20);
+const vec3 gamma = vec3(1.0 / 2.2);
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 proj;
+
+uniform vec3 camera_pos = vec3(0, 0, 0);
 
 uniform sampler2D texture;
 
-uniform vec3 light_dir = normalize(vec3(5.0, 10.0, 1.0));
-uniform vec4 light_ambient = vec4(0.1, 0.1, 0.2, 1.0);
-uniform vec4 light_difuse = vec4(0.9, 0.9, 0.8, 1.0);
-uniform vec4 light_specular = vec4(0.8, 0.8, 0.7, 1.0);
-uniform vec4 mat_ambient = vec4(1.0, 1.0, 1.0, 1.0);
-uniform vec4 mat_diffuse = vec4(1.0, 1.0, 1.0, 1.0);
-uniform vec4 mat_specular = vec4(1.0, 1.0, 1.0, 1.0);
+uniform vec3 light_pos = vec3(5.0, 10.0, 1.0);
+uniform vec3 light_ambient = vec3(0.1, 0.1, 0.2);
+uniform vec3 light_difuse = vec3(0.9, 0.9, 0.8);
+uniform vec3 light_specular = vec3(0.8, 0.8, 0.7);
+
+uniform vec3 mat_ambient = vec3(1.0, 1.0, 1.0);
+uniform vec3 mat_diffuse = vec3(1.0, 1.0, 1.0);
+uniform vec3 mat_specular = vec3(1.0, 1.0, 1.0);
 uniform float mat_ioe = 5;
 
 in vec3 pass_pos;
@@ -22,12 +29,32 @@ out vec4 out_color;
 
 void main()
 {
-  out_color = texture2D(texture, pass_uv);
+  vec3 mat_pos = vec3(model * vec4(pass_pos, 1));
+  vec3 mat_normal = normalize(transpose(inverse(mat3(model))) * pass_normal);
+  vec4 mat_color = texture2D(texture, pass_uv);
+  vec3 camera_dir = normalize(camera_pos - mat_pos);
+  vec3 light_dir = normalize(light_pos - mat_pos);
+
   // Ambient
-  out_color = out_color + mat_ambient * light_ambient;
+  vec3 ambient = mat_color.rgb * mat_ambient * light_ambient;
+
   // Diffuse
-  out_color = out_color + max(dot(pass_normal, light_dir), 0.0) * mat_diffuse * light_difuse;
+  float diffuse_dot = max(0.0, dot(mat_normal, light_dir));
+  vec3 diffuse = diffuse_dot * mat_color.rgb *  mat_diffuse * light_difuse;
+
   // Specular
-  float R = pow(max(0.0, dot(normalize(camera_pos - pass_pos), reflect(-light_dir, pass_normal))), mat_ioe);
-  out_color = out_color + R * mat_specular * light_specular;
+  float specular_r = 0.0;
+  if (diffuse_dot > 0.0)
+    specular_r = pow(max(0.0, dot(camera_dir, reflect(-light_dir, mat_normal))), mat_ioe);
+  vec3 specular = specular_r * mat_specular * light_specular;
+
+  // Attenuation
+  // float distanceToLight = length(light_pos - mat_pos);
+  float attenuation = 1.0; //1.0 / (1.0 + light.attenuation * pow(distanceToLight, 2));
+
+  // Linear color (color before gamma correction)
+  vec3 color_linear = ambient + (diffuse + specular) * attenuation;
+
+  // Final color (after gamma correction)
+  out_color = vec4(pow(color_linear, gamma), mat_color.a);
 }

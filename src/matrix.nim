@@ -31,6 +31,19 @@ proc perspective*(fov, aspect, near, far: GLfloat): Mat4 =
     0, 0, 2 * far * near / nearmfar, 0
   ]
 
+proc translate*(mat: Mat4, pos: Vec3): Mat4 =
+  result = identity()
+  var
+    x = vec3(mat.m[0], mat.m[4], mat.m[8])
+    y = vec3(mat.m[1], mat.m[5], mat.m[9])
+    z = vec3(mat.m[2], mat.m[6], mat.m[10])
+  result.m = [
+    mat.m[0], mat.m[1], mat.m[2], mat.m[3],
+    mat.m[4], mat.m[5], mat.m[6], mat.m[7],
+    mat.m[8], mat.m[9], mat.m[10], mat.m[11],
+    pos.d[0], pos.d[1], pos.d[2], mat.m[15]
+  ]
+
 proc lookat*(eye, target, up: Vec3): Mat4 =
   var
     ex = eye.d[0]
@@ -54,7 +67,7 @@ proc lookat*(eye, target, up: Vec3): Mat4 =
     x.d[0].GLfloat, y.d[0],   z.d[0],   0,
     x.d[1],  y.d[1],   z.d[1],   0,
     x.d[2],  y.d[2],   z.d[2], 0,
-    -ex,     -ey,      -ez, 1
+    -ex, -ey, -ez, 1
   ]
 
 

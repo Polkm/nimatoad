@@ -1,24 +1,14 @@
 import os, times, math
 import opengl, glu, assimp
 import matrix, vector, pointer_arithm
-import parsers
+import parsers, camera
 
 type Unchecked* {.unchecked.}[T] = array[1, T]
 
 var draws*: seq[proc()] = @[]
-var view = lookat(eye = vec3(0, -1, 3), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
-var proj = identity()
 
 proc addDraw*(draw: proc()) =
   draws.add(draw)
-
-proc uniformMat(program: GLuint, name: string, mat: ptr GLfloat) =
-  glUniformMatrix4fv(int32(glGetUniformLocation(program, name)), 1, false, mat)
-#
-proc uniformDrawMats(program: GLuint, model, view, proj: ptr GLfloat) =
-  program.uniformMat("model", model)
-  program.uniformMat("view", view)
-  program.uniformMat("proj", proj)
 
 proc attrib*(pos: uint32, size: GLint, kind: GLenum) =
   glEnableVertexAttribArray(pos)
@@ -35,7 +25,7 @@ proc buffer*(kind: GLenum, size: GLsizeiptr, data: ptr): GLuint =
   glBufferData(kind, size, data, GL_STATIC_DRAW);
 
 # Returns the proc used to draw the given model file.
-proc model*(filename: string, shdr: GLuint, trans: ptr Mat4, texture: string): proc() =
+proc model*(filename: string, program: GLuint, trans: ptr Mat4, texture: string): proc() =
   var scene = assimp.aiImportFile(filename, aiProcessPreset_TargetRealtime_Quality)
 
   # for m in 0..scene.meshCount - 1:
@@ -58,8 +48,8 @@ proc model*(filename: string, shdr: GLuint, trans: ptr Mat4, texture: string): p
       vertices[i * 3 + 0] = vert.x
       vertices[i * 3 + 1] = vert.y
       vertices[i * 3 + 2] = vert.z
-    var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * vertices.len.int32, addr vertices[0])
-    let pos = glGetAttribLocation(shdr, "in_position").GLuint
+    discard buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * vertices.len.int32, addr vertices[0])
+    let pos = glGetAttribLocation(program, "in_position").GLuint
     attrib(pos, 3'i32, cGL_FLOAT)
 
   if (mesh.hasNormals):
@@ -69,8 +59,8 @@ proc model*(filename: string, shdr: GLuint, trans: ptr Mat4, texture: string): p
       normals[i * 3 + 0] = norm.x
       normals[i * 3 + 1] = norm.y
       normals[i * 3 + 2] = norm.z
-    var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * normals.len.int32, addr normals[0])
-    let pos = glGetAttribLocation(shdr, "in_normal").GLuint
+    discard buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * normals.len.int32, addr normals[0])
+    let pos = glGetAttribLocation(program, "in_normal").GLuint
     attrib(1, 3'i32, cGL_FLOAT)
 
   if (mesh.hasUVCords):
@@ -79,15 +69,16 @@ proc model*(filename: string, shdr: GLuint, trans: ptr Mat4, texture: string): p
       var uv = mesh.texCoords[0].offset(i)[].TVector3d
       texCoords[i * 2 + 0] = uv.x
       texCoords[i * 2 + 1] = uv.y
-    var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * texCoords.len.int32, addr texCoords[0])
-    let pos = glGetAttribLocation(shdr, "in_uv").GLuint
+    discard buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * texCoords.len.int32, addr texCoords[0])
+    let pos = glGetAttribLocation(program, "in_uv").GLuint
     attrib(2, 2'i32, cGL_FLOAT)
 
   var textureHandle = parseBmp(texture)
 
   return proc() =
-    glUseProgram(shdr)
-    shdr.uniformDrawMats((trans[].m[0]).addr, addr view.m[0], addr proj.m[0])
+    glUseProgram(program)
+    glUniformMatrix4fv(glGetUniformLocation(program, "model").int32, 1, false, trans[].m[0].addr)
+    cameraUniforms(program)
 
     glBindTexture(GL_TEXTURE_2D, textureHandle)
 
@@ -106,7 +97,7 @@ proc compileShader(program: GLuint, shdr: GLuint, file: string): GLuint =
     echo(buff)
     assert false
   glAttachShader(program, shdr)
-  return shdr
+  return program
 
 proc shader*(vertexFile: string, fragmentFile: string): GLuint =
   var program = glCreateProgram()
@@ -132,13 +123,12 @@ proc draw*() =
   for i in low(draws)..high(draws):
     draws[i]()
 
-
 var scrW,scrH: int
 proc reshape*(width: cint, height: cint) =
   scrW = width
   scrH = height
   glViewport(0, 0, width, height)
-  proj = perspective(fov = 70.0, aspect = float(width) / float(height), near = 0.05, far = 100.0)
+  cameraAspect(width.float / height.float)
 
 
 
