@@ -6,7 +6,7 @@ import parsers
 type Unchecked* {.unchecked.}[T] = array[1, T]
 
 var draws*: seq[proc()] = @[]
-var view = lookat(eye = vec3(0, 0, 0), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
+var view = lookat(eye = vec3(0, -1, 3), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
 var proj = identity()
 
 proc addDraw*(draw: proc()) =
@@ -74,12 +74,11 @@ proc model*(filename: string, shdr: GLuint, trans: ptr Mat4, texture: string): p
     attrib(1, 3'i32, cGL_FLOAT)
 
   if (mesh.hasUVCords):
-    var texCoords = newSeq[float32](mesh.vertexCount * 3)
+    var texCoords = newSeq[float32](mesh.vertexCount * 2)
     for i in 0..(mesh.vertexCount - 1).int:
       var uv = mesh.texCoords[0].offset(i)[].TVector3d
-      texCoords[i * 3 + 0] = uv.x
-      texCoords[i * 3 + 1] = uv.y
-      texCoords[i * 3 + 2] = uv.z
+      texCoords[i * 2 + 0] = uv.x
+      texCoords[i * 2 + 1] = uv.y
     var buffVert = buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * texCoords.len.int32, addr texCoords[0])
     let pos = glGetAttribLocation(shdr, "in_uv").GLuint
     attrib(2, 2'i32, cGL_FLOAT)
