@@ -3,3 +3,5 @@ snim.sh
 nimcache/
 src/main
 src/vector
+*.blend
+*.blend1
