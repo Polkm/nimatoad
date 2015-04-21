@@ -6,7 +6,7 @@ import parsers
 type Unchecked* {.unchecked.}[T] = array[1, T]
 
 var draws*: seq[proc()] = @[]
-var view = lookat(eye = vec3(-2, 8, 20), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
+var view = lookat(eye = vec3(-2, 2, 7), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
 var proj = identity()
 
 proc addDraw*(draw: proc()) =
@@ -233,8 +233,30 @@ proc trect*(iX,iY,iW,iH: float, colr,colg,colb,cola: float, fileName: string): p
     glDisable(GL_TEXTURE_2D)
 
 
+type
+  screen3d* = object
+    xPos*: GLfloat
+    yPos*: GLfloat
+    zPos*: GLfloat
+    pitch*: GLfloat
+    yaw*: GLfloat
+    roll*: GLfloat
 
+proc makeScreen*( obj: screen3d, canvas: proc() ): proc() =
+  return proc() =
+    glUseProgram(0)
 
+    glRotatef( obj.pitch, 1.0, 0, 0 )
+    glRotatef( obj.yaw, 0, 1.0, 0 )
+    glRotatef( obj.roll, 0, 0, 1.0 )
+    glTranslatef( obj.xPos, obj.yPos, obj.zPos )
+
+    canvas()
+
+    glTranslatef( -1*obj.xPos, -1*obj.yPos, -1*obj.zPos )
+    glRotatef( -1*obj.roll, 0, 0, 1.0 )
+    glRotatef( -1*obj.yaw, 0, 1.0, 0 )
+    glRotatef( -1*obj.pitch, 1.0, 0, 0 )
 
 
 
