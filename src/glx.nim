@@ -6,7 +6,11 @@ import parsers
 type Unchecked* {.unchecked.}[T] = array[1, T]
 
 var draws*: seq[proc()] = @[]
+<<<<<<< HEAD
 var view = lookat(eye = vec3(-2, 2, 7), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
+=======
+var view = lookat(eye = vec3(1, 8, 20), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
+>>>>>>> dcf63a1799497c9d0026ac9f33c022f25129ee11
 var proj = identity()
 
 proc addDraw*(draw: proc()) =
@@ -35,7 +39,7 @@ proc buffer*(kind: GLenum, size: GLsizeiptr, data: ptr): GLuint =
   glBufferData(kind, size, data, GL_STATIC_DRAW);
 
 # Returns the proc used to draw the given model file.
-proc model*(filename: string, shdr: GLuint, trans: ptr Mat4): proc() =
+proc model*(filename: string, shdr: GLuint, trans: ptr Mat4, texture: string): proc() =
   var scene = assimp.aiImportFile(filename, aiProcessPreset_TargetRealtime_Quality)
 
   # for m in 0..scene.meshCount - 1:
@@ -84,10 +88,13 @@ proc model*(filename: string, shdr: GLuint, trans: ptr Mat4): proc() =
     let pos = glGetAttribLocation(shdr, "in_uv").GLuint
     attrib(2, 2'i32, cGL_FLOAT)
 
+  var textureHandle = parseBmp(texture)
 
   return proc() =
     glUseProgram(shdr)
     shdr.uniformDrawMats((trans[].m[0]).addr, addr view.m[0], addr proj.m[0])
+
+    glBindTexture(GL_TEXTURE_2D, textureHandle)
 
     glBindVertexArray(buffArray)
     glDrawElements(GL_TRIANGLES, triangles.int32, GL_UNSIGNED_INT, nil)
@@ -122,9 +129,8 @@ proc init*() =
   glClearDepth(1.0)
   glEnable(GL_BLEND)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  # glEnable(GL_DEPTH_TEST)
-  glDisable(GL_CULL_FACE)
-  # glDepthFunc(GL_LEQUAL)
+  glEnable(GL_DEPTH_TEST)
+  glEnable(GL_CULL_FACE)
 
 proc draw*() =
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)

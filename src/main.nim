@@ -5,7 +5,7 @@ sdlx.init()
 var shdr = shader("flat.vert", "flat.frag")
 # var trans = identity()
 var trans = lookat(eye = vec3(0, -2, 0), target = vec3(0, -100, 100), up = vec3(0, 1, 0))
-#addDraw(model("models/texturedCube.obj", shdr, trans.addr))
+addDraw(model("models/hind.ply", shdr, trans.addr, "bmps/notbadd.bmp"))
 
 let a = rect(10,20,500,450, 0.8,0.2,0.2,1)
 let b = orect(10,20,500,450, 0.2,0.2,0.2,1)
