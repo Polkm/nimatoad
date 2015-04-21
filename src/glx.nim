@@ -6,11 +6,7 @@ import parsers
 type Unchecked* {.unchecked.}[T] = array[1, T]
 
 var draws*: seq[proc()] = @[]
-<<<<<<< HEAD
-var view = lookat(eye = vec3(-2, 2, 7), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
-=======
-var view = lookat(eye = vec3(1, 8, 20), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
->>>>>>> dcf63a1799497c9d0026ac9f33c022f25129ee11
+var view = lookat(eye = vec3(0, 0, 0), target = vec3(0.0, 0.0, 0.0), up = vec3(0.0, 1.0, 0.0))
 var proj = identity()
 
 proc addDraw*(draw: proc()) =
