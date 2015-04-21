@@ -17,8 +17,8 @@ uniform mat4 proj;
 void main()
 {
   gl_Position = proj * view * model * vec4(in_position, 1.0);
-  pass_pos = (model * vec4(in_position, 1.0)).xyz;
-  pass_normal = normalize(vec3(view * model * vec4(in_normal, 0.0)));
+  pass_pos = in_position;
+  pass_normal = in_normal;
   pass_uv = in_uv;
   pass_color = in_color;
 }
