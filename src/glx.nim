@@ -2,6 +2,7 @@ import os, times, math
 import opengl, glu, assimp
 import matrix, vector, pointer_arithm
 import parsers, camera
+const useGlew = true
 
 type Unchecked* {.unchecked.}[T] = array[1, T]
 
