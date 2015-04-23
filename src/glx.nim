@@ -2,7 +2,6 @@ import os, times, math
 import opengl, glu, assimp
 import matrix, vector, pointer_arithm
 import parsers, camera
-const useGlew = true
 
 type Unchecked* {.unchecked.}[T] = array[1, T]
 
@@ -15,24 +14,29 @@ proc attrib*(pos: uint32, size: GLint, kind: GLenum) =
   glEnableVertexAttribArray(pos)
   glVertexAttribPointer(pos, size, kind, false, 0'i32, nil)
 
-proc bufferArray*(): GLuint =
-  glGenVertexArrays(1, addr result)
+proc bufferArray*(): uint32 =
+  glGenVertexArrays(1, result.addr)
   glBindVertexArray(result)
 
 # Buffers the given data to a VAO and returns it
-proc buffer*(kind: GLenum, size: GLsizeiptr, data: ptr): GLuint =
-  glGenBuffers(1, addr result)
+proc buffer*(kind: GLenum, size: GLsizeiptr, data: ptr): uint32 =
+  glGenBuffers(1, result.addr)
   glBindBuffer(kind, result)
   glBufferData(kind, size, data, GL_STATIC_DRAW);
 
-# Returns the proc used to draw the given model file.
-proc model*(filename: string, program: GLuint, trans: ptr Mat4, texture: string): proc() =
+proc material(diffuseFile: string): proc() =
+  var texture = parseBmp(diffuseFile)
+  return proc() =
+    glBindTexture(GL_TEXTURE_2D, texture)
+
+# Returns the draw proc of a vao constructed from a given model file.
+proc mesh*(filename: string, program: uint32): proc() =
   var scene = assimp.aiImportFile(filename, aiProcessPreset_TargetRealtime_Quality)
 
   # for m in 0..scene.meshCount - 1:
   var mesh = scene.meshes.offset(0)[]
 
-  var buffArray = bufferArray()
+  var vao = bufferArray()
   var triangles = 0;
   if (mesh.hasFaces):
     var indices = newSeq[uint32](mesh.faceCount * 3)
@@ -40,7 +44,7 @@ proc model*(filename: string, program: GLuint, trans: ptr Mat4, texture: string)
       for ii in 0..2:
         indices[i * 3 + ii] = (mesh.faces[i].indices[ii] + 0).uint32
     triangles = indices.len
-    var buffInd = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32).int32 * triangles.int32, addr indices[0])
+    var buffInd = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32).int32 * triangles.int32, indices[0].addr)
 
   if (mesh.hasPositions):
     var vertices = newSeq[float32](mesh.vertexCount * 3)
@@ -49,8 +53,8 @@ proc model*(filename: string, program: GLuint, trans: ptr Mat4, texture: string)
       vertices[i * 3 + 0] = vert.x
       vertices[i * 3 + 1] = vert.y
       vertices[i * 3 + 2] = vert.z
-    discard buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * vertices.len.int32, addr vertices[0])
-    let pos = glGetAttribLocation(program, "in_position").GLuint
+    discard buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * vertices.len.int32, vertices[0].addr)
+    let pos = glGetAttribLocation(program, "in_position").uint32
     attrib(pos, 3'i32, cGL_FLOAT)
 
   if (mesh.hasNormals):
@@ -60,8 +64,8 @@ proc model*(filename: string, program: GLuint, trans: ptr Mat4, texture: string)
       normals[i * 3 + 0] = norm.x
       normals[i * 3 + 1] = norm.y
       normals[i * 3 + 2] = norm.z
-    discard buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * normals.len.int32, addr normals[0])
-    let pos = glGetAttribLocation(program, "in_normal").GLuint
+    discard buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * normals.len.int32, normals[0].addr)
+    let pos = glGetAttribLocation(program, "in_normal").uint32
     attrib(1, 3'i32, cGL_FLOAT)
 
   if (mesh.hasUVCords):
@@ -70,23 +74,27 @@ proc model*(filename: string, program: GLuint, trans: ptr Mat4, texture: string)
       var uv = mesh.texCoords[0].offset(i)[].TVector3d
       texCoords[i * 2 + 0] = uv.x
       texCoords[i * 2 + 1] = uv.y
-    discard buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * texCoords.len.int32, addr texCoords[0])
-    let pos = glGetAttribLocation(program, "in_uv").GLuint
+    discard buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * texCoords.len.int32, texCoords[0].addr)
+    let pos = glGetAttribLocation(program, "in_uv").uint32
     attrib(2, 2'i32, cGL_FLOAT)
 
-  var textureHandle = parseBmp(texture)
+  return proc() =
+    glBindVertexArray(vao)
+    glDrawElements(GL_TRIANGLES, triangles.int32, GL_UNSIGNED_INT, nil)
 
+
+# Returns the proc used to draw the given model file.
+proc model*(drawMesh: proc(), texture, program: uint32, trans: ptr Mat4): proc() =
   return proc() =
     glUseProgram(program)
     glUniformMatrix4fv(glGetUniformLocation(program, "model").int32, 1, false, trans[].m[0].addr)
     cameraUniforms(program)
 
-    glBindTexture(GL_TEXTURE_2D, textureHandle)
+    glBindTexture(GL_TEXTURE_2D, texture)
+    drawMesh()
 
-    glBindVertexArray(buffArray)
-    glDrawElements(GL_TRIANGLES, triangles.int32, GL_UNSIGNED_INT, nil)
 
-proc compileShader(program: GLuint, shdr: GLuint, file: string): GLuint =
+proc compileShader(program: uint32, shdr: uint32, file: string): uint32 =
   var src = readFile(file).cstring
   glShaderSource(shdr, 1, cast[cstringArray](addr src), nil)
   glCompileShader(shdr)
@@ -100,7 +108,7 @@ proc compileShader(program: GLuint, shdr: GLuint, file: string): GLuint =
   glAttachShader(program, shdr)
   return program
 
-proc shader*(vertexFile: string, fragmentFile: string): GLuint =
+proc shader*(vertexFile: string, fragmentFile: string): uint32 =
   var program = glCreateProgram()
   discard compileShader(program, glCreateShader(GL_VERTEX_SHADER), "shaders/" & vertexFile)
   discard compileShader(program, glCreateShader(GL_FRAGMENT_SHADER), "shaders/" & fragmentFile)

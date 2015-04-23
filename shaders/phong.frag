@@ -11,7 +11,7 @@ uniform vec3 camera_pos = vec3(0, 0, 0);
 uniform sampler2D texture;
 
 uniform vec3 light_pos = vec3(5.0, 10.0, 1.0);
-uniform vec3 light_ambient = vec3(0.1, 0.1, 0.2);
+uniform vec3 light_ambient = vec3(0.01, 0.01, 0.03);
 uniform vec3 light_difuse = vec3(0.9, 0.9, 0.8);
 uniform vec3 light_specular = vec3(0.8, 0.8, 0.7);
 

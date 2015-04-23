@@ -1,12 +1,18 @@
 import sdlx, glx, matrix, vector
+import entity, parsers
 
 sdlx.init()
 
-var shdr = shader("flat.vert", "flat.frag")
+var phong = shader("phong.vert", "phong.frag")
+
+var drawStation = mesh("models/station1.ply", phong)
+var metalMat = parseBmp("bmps/metal2.bmp")
+
 var trans = identity()
-# var trans = lookat(eye = vec3(0, -2, 0), target = vec3(0, -100, 100), up = vec3(0, 1, 0))
-addDraw(model("models/station1.ply", shdr, trans.addr, "bmps/metal2.bmp"))
-# addDraw(model("models/texturedcube.obj", shdr, trans.addr, "bmps/notbadd.bmp"))
+addDraw(model(drawStation, metalMat, phong, trans.addr))
+# addDraw(model("models/texturedcube.obj", phong, trans.addr, "bmps/notbadd.bmp"))
+
+# Entity()
 
 let a = rect(10,20,500,450, 0.8,0.2,0.2,1)
 let b = orect(10,20,500,450, 0.2,0.2,0.2,1)
