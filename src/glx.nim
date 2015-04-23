@@ -24,7 +24,7 @@ proc buffer*(kind: GLenum, size: GLsizeiptr, data: ptr): uint32 =
   glBindBuffer(kind, result)
   glBufferData(kind, size, data, GL_STATIC_DRAW);
 
-proc material(diffuseFile: string): proc() =
+proc material*(diffuseFile: string): proc() =
   var texture = parseBmp(diffuseFile)
   return proc() =
     glBindTexture(GL_TEXTURE_2D, texture)

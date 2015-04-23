@@ -1,6 +1,16 @@
-import streams, math, opengl
+import streams, math, opengl, strutils
+
+var bmpCache: seq[tuple[f: string, i: GLuint]] = @[] # a mapping of string to GLuint (textureID)
 
 proc parseBmp*( filePath: string ): GLuint =
+  var compare: tuple[f: string, i: GLuint] #container for the cache entries
+
+  for i in low(bmpCache)..high(bmpCache):
+    compare = bmpCache[i]
+    if ( compare.f == filePath) :
+      return compare.i # instead of reloading the BMP, just return the data.
+
+  #if we didn't find it in the cache
   var
     file: File
 
@@ -104,5 +114,11 @@ proc parseBmp*( filePath: string ): GLuint =
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
 
   close(fStream)
+
+  var cache: tuple[f: string, i: GLuint]
+  cache.f = filePath
+  cache.i = textureID
+
+  bmpCache.add(cache)
 
   return textureID
