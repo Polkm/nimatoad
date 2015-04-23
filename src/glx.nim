@@ -82,17 +82,14 @@ proc mesh*(filename: string, program: uint32): proc() =
     glBindVertexArray(vao)
     glDrawElements(GL_TRIANGLES, triangles.int32, GL_UNSIGNED_INT, nil)
 
-
 # Returns the proc used to draw the given model file.
-proc model*(drawMesh: proc(), texture, program: uint32, trans: ptr Mat4): proc() =
+proc model*(drawMesh: proc(), bindMaterial: proc(), program: uint32, trans: ptr Mat4): proc() =
   return proc() =
     glUseProgram(program)
     glUniformMatrix4fv(glGetUniformLocation(program, "model").int32, 1, false, trans[].m[0].addr)
     cameraUniforms(program)
-
-    glBindTexture(GL_TEXTURE_2D, texture)
+    bindMaterial()
     drawMesh()
-
 
 proc compileShader(program: uint32, shdr: uint32, file: string): uint32 =
   var src = readFile(file).cstring

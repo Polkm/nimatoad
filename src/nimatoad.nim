@@ -7,12 +7,13 @@ sdlx.init()
 var phong = shader("phong.vert", "phong.frag")
 
 var drawStation = mesh("models/station1.ply", phong)
-var metalMat = parseBmp("bmps/metal2.bmp")
+var metalMat = material("bmps/metal2.bmp")
 
 var trans = identity()
-# var trans = lookat(eye = vec3(0, -2, 0), target = vec3(0, -100, 100), up = vec3(0, 1, 0))
-addDraw(model("models/station1.ply", shdr, trans.addr, "bmps/metal2.bmp"))
-#addDraw(model("models/icosahedron.obj", shdr, trans.addr, "bmps/metal1.bmp"))
+trans = translate(trans, vec3(1, 1, -1))
+addDraw(model(drawStation, metalMat, phong, trans.addr))
+
+# Entity()
 
 var pane = newPanel(0,240,100,100)
 pane.textureID = parseBmp("bmps/notbadd.bmp")
