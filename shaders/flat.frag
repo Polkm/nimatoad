@@ -1,4 +1,4 @@
-#version 130
+#version 150
 
 const vec3 gamma = vec3(1.0 / 2.2);
 
