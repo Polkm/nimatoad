@@ -6,7 +6,7 @@ sdlx.init()
 
 var phong = shader("phong.vert", "phong.frag")
 
-var drawStation = mesh("models/station1.ply", phong)
+var drawStation = mesh("models/hind.ply", phong)
 var metalMat = material("bmps/metal2.bmp")
 
 var trans = identity()
@@ -26,7 +26,7 @@ proc z(): proc( x,y,w,h: float ) =
     roll = 0.0.float
     xPos = 0.0.float
     yPos = 0.0.float
-    zPos = 0.1.float
+    zPos = 0.0.float
     progress = 1000
   return proc( x,y,w,h: float ) =
 

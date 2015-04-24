@@ -1,10 +1,10 @@
-import parsers, opengl
+import parsers, opengl, sdl2
 
 ###########################
 ########GUI STUFF##########
 ###########################
 
-#I/O panel management
+#panel management
 
 proc rect*( x,y,width,height: float )
 proc orect*( x,y,width,height: float )
@@ -53,6 +53,11 @@ proc panelsDraw*(): proc() =
       glLoadIdentity()
       cur = pTable[i]
       cur.drawFunc( cur.x, cur.y, cur.width, cur.height )
+
+#Panel I/O
+proc panelsMouseInput*( button: int, pressed: bool, x,y:float ) =
+  echo(x," ",y)
+  echo("clicked")
 
 # actual Drawing functions
 var
