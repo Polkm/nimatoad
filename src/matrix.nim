@@ -33,10 +33,6 @@ proc perspective*(fov, aspect, near, far: GLfloat): Mat4 =
 
 proc translate*(mat: Mat4, pos: Vec3): Mat4 =
   result = identity()
-  var
-    x = vec3(mat.m[0], mat.m[4], mat.m[8])
-    y = vec3(mat.m[1], mat.m[5], mat.m[9])
-    z = vec3(mat.m[2], mat.m[6], mat.m[10])
   result.m = [
     mat.m[0], mat.m[1], mat.m[2], mat.m[3],
     mat.m[4], mat.m[5], mat.m[6], mat.m[7],

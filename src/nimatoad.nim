@@ -1,20 +1,26 @@
 import sdlx, glx, matrix, vector
 import gui, parsers, opengl
+import model
 
 
 sdlx.init()
 
-var phong = shader("phong.vert", "phong.frag")
+var phong = initProgram("phong.vert", "phong.frag")
 
-var drawStation = mesh("models/station1.ply", phong)
-var metalMat = material("bmps/metal2.bmp")
+var drawStation = mesh("models/station1.ply", phong.handle)
+var metalMat = initMaterial("bmps/metal2.bmp")
 
-var trans = identity()
-trans = translate(trans, vec3(1, 1, -1))
-addDraw(model(drawStation, metalMat, phong, trans.addr))
+var station = newModel()
+# station.program = nil
+# echo($phong.handle)
+# station.program = phong
+
+# var trans = identity()
+# trans = translate(trans, vec3(1, 1, -1))
+# addDraw(model(drawStation, metalMat, phong, trans.addr))
 
 # Entity()
-
+#
 var pane = newPanel(0,240,100,100)
 pane.textureID = parseBmp("bmps/notbadd.bmp")
 

@@ -1,14 +1,60 @@
-import os, times, math
+import os, times, math, tables
 import opengl, glu, assimp
 import matrix, vector, pointer_arithm
 import parsers, camera
 
-type Unchecked* {.unchecked.}[T] = array[1, T]
-
+# var resources* Table[]
 var draws*: seq[proc()] = @[]
-
 proc addDraw*(draw: proc()) =
   draws.add(draw)
+
+type Unchecked* {.unchecked.}[T] = array[1, T]
+
+type Resource* = ref object of RootObj
+method use*(this: Resource) = discard
+method stop*(this: Resource) = discard
+method destroy*(this: Resource) = discard
+
+
+type Material* = ref object of Resource
+  handle*: uint32
+method use*(this: Material, program: uint32) = glBindTexture(GL_TEXTURE_2D, this.handle)
+method stop*(this: Material) = glBindTexture(GL_TEXTURE_2D, 0)
+method destroy*(this: Material) =
+  this.stop()
+  glDeleteTextures(1, this.handle.addr)
+
+proc initMaterial*(file: string): Material = return Material(handle: parseBmp(file))
+
+
+type Program* = ref object of Resource
+  handle*: uint32
+method use*(this: Program) = glUseProgram(this.handle)
+method stop*(this: Program) = glUseProgram(0)
+method destroy*(this: Program) =
+  this.stop()
+  glDeleteProgram(this.handle)
+
+proc compileShader(program: uint32, shdr: uint32, file: string) =
+  var src = readFile(file).cstring
+  glShaderSource(shdr, 1, cast[cstringArray](addr src), nil)
+  glCompileShader(shdr)
+  var status: GLint
+  glGetShaderiv(shdr, GL_COMPILE_STATUS, addr status)
+  if status != GL_TRUE:
+    var buff: array[512, char]
+    glGetShaderInfoLog(shdr, 512, nil, buff)
+    echo(buff)
+    assert false
+  glAttachShader(program, shdr)
+proc initProgram*(vertexFile: string, fragmentFile: string): Program =
+  result = Program(handle: glCreateProgram())
+  compileShader(result.handle, glCreateShader(GL_VERTEX_SHADER), "shaders/" & vertexFile)
+  compileShader(result.handle, glCreateShader(GL_FRAGMENT_SHADER), "shaders/" & fragmentFile)
+  glBindFragDataLocation(result.handle, 0, "out_color")
+  glLinkProgram(result.handle)
+  result.use()
+
 
 proc attrib*(pos: uint32, size: GLint, kind: GLenum) =
   glEnableVertexAttribArray(pos)
@@ -24,10 +70,6 @@ proc buffer*(kind: GLenum, size: GLsizeiptr, data: ptr): uint32 =
   glBindBuffer(kind, result)
   glBufferData(kind, size, data, GL_STATIC_DRAW);
 
-proc material*(diffuseFile: string): proc() =
-  var texture = parseBmp(diffuseFile)
-  return proc() =
-    glBindTexture(GL_TEXTURE_2D, texture)
 
 # Returns the draw proc of a vao constructed from a given model file.
 proc mesh*(filename: string, program: uint32): proc() =
@@ -44,12 +86,12 @@ proc mesh*(filename: string, program: uint32): proc() =
       for ii in 0..2:
         indices[i * 3 + ii] = (mesh.faces[i].indices[ii] + 0).uint32
     triangles = indices.len
-    var buffInd = buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32).int32 * triangles.int32, indices[0].addr)
+    discard buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32).int32 * triangles.int32, indices[0].addr)
 
   if (mesh.hasPositions):
     var vertices = newSeq[float32](mesh.vertexCount * 3)
     for i in 0..(mesh.vertexCount - 1).int:
-      var vert = mesh.vertices.offset(i)[].TVector3d
+      var vert = mesh.vertices.offset(i)[]
       vertices[i * 3 + 0] = vert.x
       vertices[i * 3 + 1] = vert.y
       vertices[i * 3 + 2] = vert.z
@@ -60,60 +102,27 @@ proc mesh*(filename: string, program: uint32): proc() =
   if (mesh.hasNormals):
     var normals = newSeq[float32](mesh.vertexCount * 3)
     for i in 0..(mesh.vertexCount - 1).int:
-      var norm = mesh.normals.offset(i)[].TVector3d
+      var norm = mesh.normals.offset(i)[]
       normals[i * 3 + 0] = norm.x
       normals[i * 3 + 1] = norm.y
       normals[i * 3 + 2] = norm.z
     discard buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * normals.len.int32, normals[0].addr)
-    let pos = glGetAttribLocation(program, "in_normal").uint32
+    # let pos = glGetAttribLocation(program, "in_normal").uint32
     attrib(1, 3'i32, cGL_FLOAT)
 
   if (mesh.hasUVCords):
     var texCoords = newSeq[float32](mesh.vertexCount * 2)
     for i in 0..(mesh.vertexCount - 1).int:
-      var uv = mesh.texCoords[0].offset(i)[].TVector3d
+      var uv = mesh.texCoords[0].offset(i)[]
       texCoords[i * 2 + 0] = uv.x
       texCoords[i * 2 + 1] = uv.y
     discard buffer(GL_ARRAY_BUFFER, sizeof(float32).int32 * texCoords.len.int32, texCoords[0].addr)
-    let pos = glGetAttribLocation(program, "in_uv").uint32
+    # let pos = glGetAttribLocation(program, "in_uv").uint32
     attrib(2, 2'i32, cGL_FLOAT)
 
   return proc() =
     glBindVertexArray(vao)
     glDrawElements(GL_TRIANGLES, triangles.int32, GL_UNSIGNED_INT, nil)
-
-# Returns the proc used to draw the given model file.
-proc model*(drawMesh: proc(), bindMaterial: proc(), program: uint32, trans: ptr Mat4): proc() =
-  return proc() =
-    glUseProgram(program)
-    glUniformMatrix4fv(glGetUniformLocation(program, "model").int32, 1, false, trans[].m[0].addr)
-    cameraUniforms(program)
-    bindMaterial()
-    drawMesh()
-
-proc compileShader(program: uint32, shdr: uint32, file: string): uint32 =
-  var src = readFile(file).cstring
-  glShaderSource(shdr, 1, cast[cstringArray](addr src), nil)
-  glCompileShader(shdr)
-  var status: GLint
-  glGetShaderiv(shdr, GL_COMPILE_STATUS, addr status)
-  if status != GL_TRUE:
-    var buff: array[512, char]
-    glGetShaderInfoLog(shdr, 512, nil, buff)
-    echo(buff)
-    assert false
-  glAttachShader(program, shdr)
-  return program
-
-proc shader*(vertexFile: string, fragmentFile: string): uint32 =
-  var program = glCreateProgram()
-  discard compileShader(program, glCreateShader(GL_VERTEX_SHADER), "shaders/" & vertexFile)
-  discard compileShader(program, glCreateShader(GL_FRAGMENT_SHADER), "shaders/" & fragmentFile)
-
-  glBindFragDataLocation(program, 0, "out_color")
-  glLinkProgram(program)
-  glUseProgram(program)
-  return program
 
 proc init*() =
   loadExtensions()
@@ -124,7 +133,7 @@ proc init*() =
   glEnable(GL_DEPTH_TEST)
   glEnable(GL_CULL_FACE)
 
-proc draw*() =
+proc drawScene*() =
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
   for i in low(draws)..high(draws):
     draws[i]()

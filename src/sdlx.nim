@@ -40,7 +40,7 @@ proc run*() =
           let newHeight = windowEvent.data2
           glx.reshape(newWidth, newHeight)
 
-    glx.draw()
+    glx.drawScene()
     window.glSwapWindow()
 
     limitFrameRate()
