@@ -66,16 +66,12 @@ proc run*() =
           let newHeight = windowEvent.data2
           glx.reshape(newWidth, newHeight)
 
-<<<<<<< HEAD
       if evt.kind == KeyDown or evt.kind == KeyUp :
         keyInput(evt.key)
       if evt.kind == MouseButtonDown or evt.kind == MouseButtonUp :
         mouseInput(evt.button)
 
-    glx.draw()
-=======
     glx.drawScene()
->>>>>>> bd11e8c2ddc9d91a6fb064c1edabeb2225611ad8
     window.glSwapWindow()
 
     limitFrameRate()
