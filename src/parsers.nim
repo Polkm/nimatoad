@@ -1,14 +1,20 @@
-import streams, math, opengl, strutils
+import streams, math, opengl, strutils, tables
 
-var bmpCache: seq[tuple[f: string, i: GLuint]] = @[] # a mapping of string to GLuint (textureID)
+# var bmpCache: seq[tuple[f: string, i: GLuint]] = @[] # a mapping of string to GLuint (textureID)
+
+var bmpCache = initTable[string, GLuint]() # a mapping of string to GLuint (textureID)
 
 proc parseBmp*( filePath: string ): GLuint =
-  var compare: tuple[f: string, i: GLuint] #container for the cache entries
+  # var compare: tuple[f: string, i: GLuint] #container for the cache entries
+  #
+  # for i in low(bmpCache)..high(bmpCache):
+  #   compare = bmpCache[i]
+  #   if ( compare.f == filePath) :
+  #     return compare.i # instead of reloading the BMP, just return the data.
 
-  for i in low(bmpCache)..high(bmpCache):
-    compare = bmpCache[i]
-    if ( compare.f == filePath) :
-      return compare.i # instead of reloading the BMP, just return the data.
+  if bmpCache.hasKey(filePath):
+    return bmpCache[filePath]
+
 
   #if we didn't find it in the cache
   var
@@ -115,10 +121,12 @@ proc parseBmp*( filePath: string ): GLuint =
 
   close(fStream)
 
-  var cache: tuple[f: string, i: GLuint]
-  cache.f = filePath
-  cache.i = textureID
+  # var cache: tuple[f: string, i: GLuint]
+  # cache.f = filePath
+  # cache.i = textureID
+  #
+  # bmpCache.add(cache)
 
-  bmpCache.add(cache)
+  bmpCache[filePath] = textureID
 
   return textureID

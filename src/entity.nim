@@ -1,6 +1,6 @@
-# type Entity = ref object of RootObj
-#   matrix: Mat4
-#   model: proc(mat: Mat4)
-#
-# proc newEntity(): ref Entity
-#
+import matrix
+
+type Entity* = object of RootObj
+  matrix*: Mat4
+
+proc newEntity*(): ref Entity = new Entity
