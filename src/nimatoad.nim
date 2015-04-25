@@ -6,14 +6,14 @@ import model
 sdlx.init()
 
 var phong = initProgram("phong.vert", "phong.frag")
-var metal2 = initMaterial("bmps/metal2.bmp")
-var stationMesh = initMesh("models/station1.ply", phong.handle)
+var mat = initMaterial("bmps/rock1.bmp")
+var msh = initMesh("models/astroid1.obj", phong.handle)
 
 var station = newModel()
 station.matrix = identity()
 station.program = phong
-station.material = metal2
-station.mesh = stationMesh
+station.material = mat
+station.mesh = msh
 
 
 var pane = newPanel(0,240,100,100)

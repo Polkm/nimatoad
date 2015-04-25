@@ -1,6 +1,6 @@
 import opengl, matrix, vector
 
-var pos = vec3(0, 0.5, 4)
+var pos = vec3(0, 0.5, 5)
 var view = identity()
 var proj = identity()
 

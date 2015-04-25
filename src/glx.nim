@@ -46,11 +46,14 @@ proc initProgram*(vertexFile: string, fragmentFile: string): Program =
   glBindFragDataLocation(result.handle, 0, "out_color")
   glLinkProgram(result.handle)
   result.use()
+  glUniform1i(glGetUniformLocation(result.handle, "texture"), 0)
 
 type Material* = ref object of Resource
   handle*: uint32
 
-method use*(this: Material, program: uint32) = glBindTexture(GL_TEXTURE_2D, this.handle)
+method use*(this: Material, program: uint32) =
+  # glActiveTexture(GL_TEXTURE0)
+  glBindTexture(GL_TEXTURE_2D, this.handle)
 
 method stop*(this: Material) = glBindTexture(GL_TEXTURE_2D, 0)
 

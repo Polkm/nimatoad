@@ -111,8 +111,9 @@ proc parseBmp*( filePath: string ): GLuint =
   var textureID: GLuint
 
   glGenTextures(1, addr textureID)
+  echo($textureID)
+  glActiveTexture(GL_TEXTURE0)
   glBindTexture(GL_TEXTURE_2D, textureID)
-
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, addr finalSeq[0])
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
