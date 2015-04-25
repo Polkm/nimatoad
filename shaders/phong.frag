@@ -18,7 +18,7 @@ uniform vec3 light_specular = vec3(0.8, 0.8, 0.7);
 
 uniform vec3 mat_ambient = vec3(1.0, 1.0, 1.0);
 uniform vec3 mat_diffuse = vec3(1.0, 1.0, 1.0);
-uniform vec3 mat_specular = vec3(0.0, 0.0, 0.0);
+uniform vec3 mat_specular = vec3(1.0, 1.0, 1.0);
 uniform float mat_ioe = 40;
 
 in vec3 pass_pos;
