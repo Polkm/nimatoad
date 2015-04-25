@@ -15,22 +15,13 @@ method use*(this: Resource) = discard
 method stop*(this: Resource) = discard
 method destroy*(this: Resource) = discard
 
-
-type Material* = ref object of Resource
-  handle*: uint32
-method use*(this: Material, program: uint32) = glBindTexture(GL_TEXTURE_2D, this.handle)
-method stop*(this: Material) = glBindTexture(GL_TEXTURE_2D, 0)
-method destroy*(this: Material) =
-  this.stop()
-  glDeleteTextures(1, this.handle.addr)
-
-proc initMaterial*(file: string): Material = return Material(handle: parseBmp(file))
-
-
 type Program* = ref object of Resource
   handle*: uint32
+
 method use*(this: Program) = glUseProgram(this.handle)
+
 method stop*(this: Program) = glUseProgram(0)
+
 method destroy*(this: Program) =
   this.stop()
   glDeleteProgram(this.handle)
@@ -47,6 +38,7 @@ proc compileShader(program: uint32, shdr: uint32, file: string) =
     echo(buff)
     assert false
   glAttachShader(program, shdr)
+
 proc initProgram*(vertexFile: string, fragmentFile: string): Program =
   result = Program(handle: glCreateProgram())
   compileShader(result.handle, glCreateShader(GL_VERTEX_SHADER), "shaders/" & vertexFile)
@@ -55,10 +47,32 @@ proc initProgram*(vertexFile: string, fragmentFile: string): Program =
   glLinkProgram(result.handle)
   result.use()
 
+type Material* = ref object of Resource
+  handle*: uint32
 
-proc attrib*(pos: uint32, size: GLint, kind: GLenum) =
-  glEnableVertexAttribArray(pos)
-  glVertexAttribPointer(pos, size, kind, false, 0'i32, nil)
+method use*(this: Material, program: uint32) = glBindTexture(GL_TEXTURE_2D, this.handle)
+
+method stop*(this: Material) = glBindTexture(GL_TEXTURE_2D, 0)
+
+method destroy*(this: Material) =
+  this.stop()
+  glDeleteTextures(1, this.handle.addr)
+
+proc initMaterial*(file: string): Material = return Material(handle: parseBmp(file))
+
+type Mesh* = ref object of Resource
+  handle*: uint32
+  triangles*: int32
+
+method use*(this: Mesh) =
+  glBindVertexArray(this.handle)
+  glDrawElements(GL_TRIANGLES, this.triangles, GL_UNSIGNED_INT, nil)
+
+method stop*(this: Mesh) = glBindVertexArray(0)
+
+method destroy*(this: Mesh) =
+  this.stop()
+  glDeleteVertexArrays(1, this.handle.addr)
 
 proc bufferArray*(): uint32 =
   glGenVertexArrays(1, result.addr)
@@ -70,22 +84,24 @@ proc buffer*(kind: GLenum, size: GLsizeiptr, data: ptr): uint32 =
   glBindBuffer(kind, result)
   glBufferData(kind, size, data, GL_STATIC_DRAW);
 
+proc attrib*(pos: uint32, size: GLint, kind: GLenum) =
+  glEnableVertexAttribArray(pos)
+  glVertexAttribPointer(pos, size, kind, false, 0'i32, nil)
 
-# Returns the draw proc of a vao constructed from a given model file.
-proc mesh*(filename: string, program: uint32): proc() =
+proc initMesh*(filename: string, program: uint32): Mesh =
   var scene = assimp.aiImportFile(filename, aiProcessPreset_TargetRealtime_Quality)
 
   # for m in 0..scene.meshCount - 1:
   var mesh = scene.meshes.offset(0)[]
 
   var vao = bufferArray()
-  var triangles = 0;
+  var triangles = 0'i32;
   if (mesh.hasFaces):
     var indices = newSeq[uint32](mesh.faceCount * 3)
     for i in 0..mesh.faceCount - 1:
       for ii in 0..2:
         indices[i * 3 + ii] = (mesh.faces[i].indices[ii] + 0).uint32
-    triangles = indices.len
+    triangles = indices.len.int32
     discard buffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32).int32 * triangles.int32, indices[0].addr)
 
   if (mesh.hasPositions):
@@ -120,9 +136,7 @@ proc mesh*(filename: string, program: uint32): proc() =
     # let pos = glGetAttribLocation(program, "in_uv").uint32
     attrib(2, 2'i32, cGL_FLOAT)
 
-  return proc() =
-    glBindVertexArray(vao)
-    glDrawElements(GL_TRIANGLES, triangles.int32, GL_UNSIGNED_INT, nil)
+  return Mesh(handle: vao, triangles: triangles)
 
 proc init*() =
   loadExtensions()
@@ -141,43 +155,3 @@ proc drawScene*() =
 proc reshape*(width: cint, height: cint) =
   glViewport(0, 0, width, height)
   cameraAspect(width.float / height.float)
-
-
-  # // buffer for faces
-  # glGenBuffers(1, &buffer);
-  # glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
-  # glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * mesh->mNumFaces * 3, faceArray, GL_STATIC_DRAW);
-  #
-  # // buffer for vertex positions
-  # if (mesh->HasPositions()) {
-  #     glGenBuffers(1, &buffer);
-  #     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-  #     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->mNumVertices, mesh->mVertices, GL_STATIC_DRAW);
-  #     glEnableVertexAttribArray(vertexLoc);
-  #     glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-  # }
-  #
-  # // buffer for vertex normals
-  # if (mesh->HasNormals()) {
-  #     glGenBuffers(1, &buffer);
-  #     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-  #     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->mNumVertices, mesh->mNormals, GL_STATIC_DRAW);
-  #     glEnableVertexAttribArray(normalLoc);
-  #     glVertexAttribPointer(normalLoc, 3, GL_FLOAT, 0, 0, 0);
-  # }
-  #
-  # // buffer for vertex texture coordinates
-  # if (mesh->HasTextureCoords(0)) {
-  #     float *texCoords = (float *)malloc(sizeof(float)*2*mesh->mNumVertices);
-  #     for (uint k = 0; k < mesh->mNumVertices; ++k) {
-  #
-  #         texCoords[k*2]   = mesh->mTextureCoords[0][k].x;
-  #         texCoords[k*2+1] = mesh->mTextureCoords[0][k].y;
-  #
-  #     }
-  #     glGenBuffers(1, &buffer);
-  #     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-  #     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->mNumVertices, texCoords, GL_STATIC_DRAW);
-  #     glEnableVertexAttribArray(texCoordLoc);
-  #     glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, 0, 0, 0);
-  # }

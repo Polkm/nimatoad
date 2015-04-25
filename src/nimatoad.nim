@@ -6,21 +6,16 @@ import model
 sdlx.init()
 
 var phong = initProgram("phong.vert", "phong.frag")
-
-var drawStation = mesh("models/station1.ply", phong.handle)
-var metalMat = initMaterial("bmps/metal2.bmp")
+var metal2 = initMaterial("bmps/metal2.bmp")
+var stationMesh = initMesh("models/station1.ply", phong.handle)
 
 var station = newModel()
-# station.program = nil
-# echo($phong.handle)
-# station.program = phong
+station.matrix = identity()
+station.program = phong
+station.material = metal2
+station.mesh = stationMesh
 
-# var trans = identity()
-# trans = translate(trans, vec3(1, 1, -1))
-# addDraw(model(drawStation, metalMat, phong, trans.addr))
 
-# Entity()
-#
 var pane = newPanel(0,240,100,100)
 pane.textureID = parseBmp("bmps/notbadd.bmp")
 
