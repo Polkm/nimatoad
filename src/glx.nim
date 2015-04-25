@@ -35,7 +35,6 @@ proc compileShader(program: uint32, shdr: uint32, file: string) =
   if status != GL_TRUE:
     var buff: array[512, char]
     glGetShaderInfoLog(shdr, 512, nil, buff)
-    echo(buff)
     assert false
   glAttachShader(program, shdr)
 
@@ -47,21 +46,31 @@ proc initProgram*(vertexFile: string, fragmentFile: string): Program =
   glLinkProgram(result.handle)
   result.use()
   glUniform1i(glGetUniformLocation(result.handle, "texture"), 0)
+  glUniform1i(glGetUniformLocation(result.handle, "normalmap"), 1)
 
 type Material* = ref object of Resource
-  handle*: uint32
+  diffuse*: uint32
+  normal*: uint32
 
 method use*(this: Material, program: uint32) =
-  # glActiveTexture(GL_TEXTURE0)
-  glBindTexture(GL_TEXTURE_2D, this.handle)
+  glActiveTexture(GL_TEXTURE0)
+  glBindTexture(GL_TEXTURE_2D, this.diffuse)
+  glActiveTexture(GL_TEXTURE1)
+  glBindTexture(GL_TEXTURE_2D, this.normal)
+  glActiveTexture(GL_TEXTURE0)
 
-method stop*(this: Material) = glBindTexture(GL_TEXTURE_2D, 0)
+method stop*(this: Material) =
+  glBindTexture(GL_TEXTURE_2D, 0)
 
 method destroy*(this: Material) =
   this.stop()
-  glDeleteTextures(1, this.handle.addr)
+  glDeleteTextures(1, this.diffuse.addr)
+  glDeleteTextures(1, this.normal.addr)
 
-proc initMaterial*(file: string): Material = return Material(handle: parseBmp(file))
+proc initMaterial*(file: string): Material =
+  return Material(diffuse: parseBmp(file))
+proc initMaterial*(file: string, normalFile: string): Material =
+  return Material(diffuse: parseBmp(file), normal: parseBmp(normalFile))
 
 type Mesh* = ref object of Resource
   handle*: uint32

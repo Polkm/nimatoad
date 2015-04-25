@@ -9,6 +9,7 @@ uniform mat4 proj;
 uniform vec3 camera_pos = vec3(0, 0, 0);
 
 uniform sampler2D texture;
+uniform sampler2D normalmap;
 
 uniform vec3 light_pos = vec3(5.0, 10.0, 1.0);
 uniform vec3 light_ambient = vec3(0.01, 0.01, 0.03);
@@ -30,8 +31,10 @@ out vec4 out_color;
 void main()
 {
   vec3 mat_pos = vec3(model * vec4(pass_pos, 1));
-  vec3 mat_normal = normalize(transpose(inverse(mat3(model))) * pass_normal);
   vec4 mat_color = texture2D(texture, pass_uv);
+  // vec3 n = texture(normalmap, pass_uv);
+  vec3 n = normalize((texture2D(normalmap, pass_uv).rgb + pass_normal) * 2.0 - 1.0);
+  vec3 mat_normal = normalize(transpose(inverse(mat3(model))) * n);
   vec3 camera_dir = normalize(camera_pos - mat_pos);
   vec3 light_dir = normalize(light_pos - mat_pos);
 

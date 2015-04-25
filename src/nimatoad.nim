@@ -6,7 +6,7 @@ import model
 sdlx.init()
 
 var phong = initProgram("phong.vert", "phong.frag")
-var mat = initMaterial("bmps/rock1.bmp")
+var mat = initMaterial("bmps/rock1.bmp", "bmps/rock1_normal.bmp")
 var msh = initMesh("models/astroid1.obj", phong.handle)
 
 var station = newModel()
