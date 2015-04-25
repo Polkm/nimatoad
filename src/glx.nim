@@ -1,4 +1,4 @@
-import os, times, math, tables
+import os, times, math, tables, strutils
 import opengl, glu, assimp
 import matrix, vector, pointer_arithm
 import parsers, camera
@@ -68,7 +68,7 @@ method destroy*(this: Material) =
   glDeleteTextures(1, this.normal.addr)
 
 proc initMaterial*(file: string): Material =
-  return Material(diffuse: parseBmp(file))
+  return Material(diffuse: parseBmp(file), normal: parseBmp(replace(file, ".bmp", "_normal.bmp")))
 proc initMaterial*(file: string, normalFile: string): Material =
   return Material(diffuse: parseBmp(file), normal: parseBmp(normalFile))
 
