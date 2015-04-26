@@ -49,9 +49,25 @@ proc keyInput( evt: KeyboardEventPtr ) =
   if evt.keysym.sym == K_SPACE:
     echo("You pressed Space")
   if evt.keysym.sym == K_W:
-    cameraPoint(camera.pos + vec3(-1, 0, 0), vec3(0, 0, 0))
+    cameraEye(camera.pos + vec3(0, 0, 1), camera.pitch, camera.yaw)
+    # cameraPoint(camera.pos + vec3(0, 0, 1), vec3(0, 0, 0))
   if evt.keysym.sym == K_S:
-    cameraPoint(camera.pos + vec3(1, 0, 0), vec3(0, 0, 0))
+    cameraEye(camera.pos + vec3(0, 0, -1), camera.pitch, camera.yaw)
+    # cameraPoint(camera.pos + vec3(0, 0, -1), vec3(0, 0, 0))
+  if evt.keysym.sym == K_D:
+    cameraEye(camera.pos + vec3(-1, 0, 0), camera.pitch, camera.yaw)
+    # cameraPoint(camera.pos + vec3(1, 0, 0), vec3(0, 0, 0))
+  if evt.keysym.sym == K_A:
+    cameraEye(camera.pos + vec3(1, 0, 0), camera.pitch, camera.yaw)
+    # cameraPoint(camera.pos + vec3(-1, 0, 0), vec3(0, 0, 0))
+  if evt.keysym.sym == K_UP:
+    cameraEye(camera.pos, camera.pitch + 3, camera.yaw)
+  if evt.keysym.sym == K_DOWN:
+    cameraEye(camera.pos, camera.pitch - 3, camera.yaw)
+  if evt.keysym.sym == K_RIGHT:
+    cameraEye(camera.pos, camera.pitch, camera.yaw + 3)
+  if evt.keysym.sym == K_LEFT:
+    cameraEye(camera.pos, camera.pitch, camera.yaw - 3)
 
 
 proc run*() =

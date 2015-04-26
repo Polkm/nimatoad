@@ -11,6 +11,10 @@ proc `$`*(x: Mat4): string =
         $x.m[8] & ", " & $x.m[9] & ", " & $x.m[10] & ", " & $x.m[11] & "\n " &
         $x.m[12] & ", " & $x.m[13] & ", " & $x.m[14] & ", " & $x.m[15] & "]"
 
+proc mat4*(m: Mat4): Mat4 =
+  result = Mat4()
+  result.m = m.m
+
 proc identity*(): Mat4 =
   result = Mat4()
   result.m = [1.0f32, 0.0, 0.0, 0.0,
@@ -31,44 +35,66 @@ proc perspective*(fov, aspect, near, far: GLfloat): Mat4 =
     0, 0, 2 * far * near / nearmfar, 0
   ]
 
-proc translate*(mat: Mat4, pos: Vec3): Mat4 =
-  result = identity()
-  result.m = [
-    mat.m[0], mat.m[1], mat.m[2], mat.m[3],
-    mat.m[4], mat.m[5], mat.m[6], mat.m[7],
-    mat.m[8], mat.m[9], mat.m[10], mat.m[11],
-    pos.d[0], pos.d[1], pos.d[2], mat.m[15]
-  ]
+proc translate*(m: Mat4, pos: Vec3): Mat4 =
+  var
+    x = vec3(m.m[0], m.m[1], m.m[2])
+    y = vec3(m.m[4], m.m[5], m.m[6])
+    z = vec3(m.m[8], m.m[9], m.m[10])
+    w = vec3(m.m[12], m.m[13], m.m[14])
+  result = mat4(m)
+  result.m[12] = m.m[12] + dot(x, pos)
+  result.m[13] = m.m[13] + dot(y, pos)
+  result.m[14] = m.m[14] + dot(z, pos)
+  result.m[15] = m.m[15] + dot(w, pos)
+
+proc rotate*(m: Mat4, angle: float32, axis: Vec3): Mat4 =
+  result = mat4(m)
+  var
+    theta = angle * PI / 180.0
+    tcos = cos(theta)
+    tsin = sin(theta)
+    x = axis.d[0]
+    y = axis.d[1]
+    z = axis.d[2]
+    x2 = x * x
+    y2 = y * y
+    z2 = z * z
+    L2 = x2 + y2 + z2
+    L = sqrt(L2)
+
+  result.m[0] = (x2 + (y2 + z2) * tcos) / L2
+  result.m[1] = (x * y * (1 - tcos) - z * L * tsin) / L2
+  result.m[2] = (x * z * (1 - tcos) + y * L * tsin) / L2
+  # result.m[3] = 0.0
+
+  result.m[4] = (x * y * (1 - tcos) + z * L * tsin) / L2
+  result.m[5] = (y2 + (x2 + z2) * tcos) / L2
+  result.m[6] = (y * z * (1 - tcos) - x * L * tsin) / L2
+  # result.m[7] = 0.0
+
+  result.m[8] = (x * z * (1 - tcos) - y * L * tsin) / L2
+  result.m[9] = (y * z * (1 - tcos) + x * L * tsin) / L2
+  result.m[10] = (z2 + (x2 + y2) * tcos) / L2
+  # result.m[11] = 0.0
 
 proc lookat*(eye, target, up: Vec3): Mat4 =
   var
-    ex = eye.d[0]
-    ey = eye.d[1]
-    ez = eye.d[2]
-    tx = target.d[0]
-    ty = target.d[1]
-    tz = target.d[2]
-    z = normal(vec3(ex-tx, ey-ty, ez-tz))
+    z = normal(eye - target)
     x = normal(cross(up, z))
     y = normal(cross(z, x))
-  # result = identity()
-  # result.m = [
-  #   x.d[0].GLfloat, y.d[0],   z.d[0],   0,
-  #   x.d[1],  y.d[1],   z.d[1],   0,
-  #   x.d[2],  y.d[2],   z.d[2],   0,
-  #   -ex,     -ey,      -ez,      1
-  # ]
   result = identity()
   result.m = [
-    x.d[0].GLfloat, y.d[0],   z.d[0],   0,
-    x.d[1],  y.d[1],   z.d[1],   0,
-    x.d[2],  y.d[2],   z.d[2], 0,
-    -ex, -ey, -ez, 1
+    x.d[0].GLfloat, x.d[1],   x.d[2],   0,
+    y.d[0],  y.d[1],   y.d[2],   0,
+    z.d[0],  z.d[1],   z.d[2], 0,
+    dot(x, eye), dot(y, eye), -dot(z, eye), 1
   ]
 
 
 
-# mat4_t mat4_transpose(mat4_t mat, mat4_t dest) {
+
+
+# mat4_t mat4_transpose(mat4_t m, mat4_t dest) {
 #     // If we are transposing ourselves we can skip a few steps but have to cache some values
 #     if (!dest || mat == dest) {
 #         double a01 = mat[1], a02 = mat[2], a03 = mat[3],

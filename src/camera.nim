@@ -1,13 +1,22 @@
 import opengl, matrix, vector
 
-var pos* = vec3(0, 0.5, 5)
+var pos* = vec3(0, 0, -10)
+var pitch* = 0.0'f32
+var yaw* = 0.0'f32
 var view = identity()
 var proj = identity()
 
 proc cameraPoint*(eye, target: Vec3) =
   pos = eye
-  view = lookat(eye = pos, target = target, up = vec3(0, 1, 0))
-cameraPoint(pos, vec3(0, 0, 0))
+  view = lookat(eye = pos, target = target, up = vec3(0.0, 1.0, 0.0))
+  echo($view)
+cameraPoint(pos, vec3(0.0, 0.0, 0.0))
+
+proc cameraEye*(eye: Vec3, pitch, yaw: float32) =
+  pos = eye
+  camera.pitch = pitch
+  camera.yaw = yaw
+  view = identity().rotate(yaw, vec3(0, 1, 0)).rotate(pitch, vec3(1, 0, 0)).translate(eye)
 
 proc cameraAspect*(aspect: float) =
   proj = perspective(fov = 40.0, aspect = aspect, near = 0.05, far = 10000.0)
