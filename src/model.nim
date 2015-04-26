@@ -11,7 +11,7 @@ proc draw*(this: ref Model, ) =
   this.program.use()
   glUniformMatrix4fv(glGetUniformLocation(this.program.handle, "model").int32, 1, false, this.matrix.m[0].addr)
   cameraUniforms(this.program.handle)
-  this.material.use(this.program.handle)
+  this.material.use(this.program)
   this.mesh.use()
 
 proc newModel*(): ref Model =

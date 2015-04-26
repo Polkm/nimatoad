@@ -19,7 +19,7 @@ uniform vec3 light_specular = vec3(0.8, 0.8, 0.7);
 uniform vec3 mat_ambient = vec3(1.0, 1.0, 1.0);
 uniform vec3 mat_diffuse = vec3(1.0, 1.0, 1.0);
 uniform vec3 mat_specular = vec3(1.0, 1.0, 1.0);
-uniform float mat_ioe = 40;
+uniform float mat_shine = 40;
 
 in vec3 pass_pos;
 in vec3 pass_normal;
@@ -48,7 +48,7 @@ void main()
   // Specular
   float specular_r = 0.0;
   if (diffuse_dot > 0.0)
-    specular_r = pow(max(0.0, dot(camera_dir, reflect(-light_dir, mat_normal))), mat_ioe);
+    specular_r = pow(max(0.0, dot(camera_dir, reflect(-light_dir, mat_normal))), mat_shine);
   vec3 specular = specular_r * mat_specular * light_specular;
 
   // Attenuation

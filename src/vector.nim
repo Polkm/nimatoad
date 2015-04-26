@@ -13,6 +13,10 @@ proc vec3*(v: Vec3): Vec3 =
 
 proc `$`*(v: Vec3): string = "(" & $v.d[0] & ", " & $v.d[1] & ", " & $v.d[2] & ")"
 proc `==`*(a, b: Vec3): bool = a.d[0] == b.d[0] and a.d[1] == b.d[1] and a.d[2] == b.d[2]
+proc `+`*(a, b: Vec3): Vec3 = vec3(a.d[0] + b.d[0], a.d[1] + b.d[1], a.d[2] + b.d[2])
+proc `-`*(a, b: Vec3): Vec3 = vec3(a.d[0] - b.d[0], a.d[1] - b.d[1], a.d[2] - b.d[2])
+proc `*`*(a, b: Vec3): Vec3 = vec3(a.d[0] * b.d[0], a.d[1] * b.d[1], a.d[2] * b.d[2])
+proc `/`*(a, b: Vec3): Vec3 = vec3(a.d[0] / b.d[0], a.d[1] / b.d[1], a.d[2] / b.d[2])
 
 proc length2*(v: Vec3): float = v.d[0] * v.d[0] + v.d[1] * v.d[1] + v.d[2] * v.d[2]
 proc length*(v: Vec3): float = sqrt(v.length2())

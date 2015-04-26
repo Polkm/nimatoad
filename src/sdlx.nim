@@ -1,4 +1,4 @@
-import sdl2, glx, gui
+import sdl2, glx, gui, camera, vector
 
 var windowTitle* = "Nimatoad"
 var screenWidth*: cint = 640
@@ -46,8 +46,13 @@ proc mouseInput( evt: MouseButtonEventPtr ) =
 
 #Handles Single Key Input
 proc keyInput( evt: KeyboardEventPtr ) =
-  if evt.keysym.sym == K_SPACE :
+  if evt.keysym.sym == K_SPACE:
     echo("You pressed Space")
+  if evt.keysym.sym == K_W:
+    cameraPoint(camera.pos + vec3(-1, 0, 0), vec3(0, 0, 0))
+  if evt.keysym.sym == K_S:
+    cameraPoint(camera.pos + vec3(1, 0, 0), vec3(0, 0, 0))
+
 
 proc run*() =
   var

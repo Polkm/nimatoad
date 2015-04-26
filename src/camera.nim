@@ -1,6 +1,6 @@
 import opengl, matrix, vector
 
-var pos = vec3(0, 0.5, 5)
+var pos* = vec3(0, 0.5, 5)
 var view = identity()
 var proj = identity()
 
@@ -8,7 +8,6 @@ proc cameraPoint*(eye, target: Vec3) =
   pos = eye
   view = lookat(eye = pos, target = target, up = vec3(0, 1, 0))
 cameraPoint(pos, vec3(0, 0, 0))
-echo($view)
 
 proc cameraAspect*(aspect: float) =
   proj = perspective(fov = 40.0, aspect = aspect, near = 0.05, far = 10000.0)
