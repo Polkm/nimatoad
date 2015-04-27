@@ -57,9 +57,9 @@ proc keyInput( evt: KeyboardEventPtr ) =
   if evt.keysym.sym == K_A:
     moveEyeSide(-1.0)
   if evt.keysym.sym == K_UP:
-    cameraEye(camera.pos, camera.pitch + 3, camera.yaw)
-  if evt.keysym.sym == K_DOWN:
     cameraEye(camera.pos, camera.pitch - 3, camera.yaw)
+  if evt.keysym.sym == K_DOWN:
+    cameraEye(camera.pos, camera.pitch + 3, camera.yaw)
   if evt.keysym.sym == K_RIGHT:
     cameraEye(camera.pos, camera.pitch, camera.yaw + 3)
   if evt.keysym.sym == K_LEFT:

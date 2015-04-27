@@ -25,9 +25,9 @@ proc moveEyeSide*(amount: float) =
   cameraEye(camera.pos + view.side() * amount, camera.pitch, camera.yaw)
 
 proc cameraAspect*(aspect: float) =
-  proj = perspective(fov = 40.0, aspect = aspect, near = 0.05, far = 10000.0)
+  proj = perspective(fov = 35.0, aspect = aspect, near = 0.05, far = 10000.0)
 
 proc cameraUniforms*(program: uint32) =
   glUniformMatrix4fv(glGetUniformLocation(program, "view").int32, 1, false, view.m[0].addr)
   glUniformMatrix4fv(glGetUniformLocation(program, "proj").int32, 1, false, proj.m[0].addr)
-  glUniform3f(glGetUniformLocation(program, "camera_pos").int32, pos.d[0], pos.d[1], pos.d[2])
+  glUniform3f(glGetUniformLocation(program, "camera_pos").int32, pos[0], pos[1], pos[2])

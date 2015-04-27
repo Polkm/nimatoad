@@ -59,5 +59,6 @@ void main()
   vec3 color_linear = ambient + (diffuse + specular) * attenuation;
 
   // Final color (after gamma correction)
+  // out_color = vec4(1);
   out_color = vec4(pow(color_linear, gamma), mat_color.a);
 }
