@@ -160,16 +160,23 @@ proc rotate*(m: Mat4, angle: float32, axis: Vec3): Mat4 =
   result[10] = a02 * b20 + a12 * b21 + a22 * b22
   result[11] = a03 * b20 + a13 * b21 + a23 * b22
 
+proc xspace*(view: Mat4): Vec3 = vec3(view[0], view[1], view[2])
+proc yspace*(view: Mat4): Vec3 = vec3(view[4], view[5], view[6])
+proc zspace*(view: Mat4): Vec3 = vec3(view[8], view[9], view[10])
+proc space*(view: Mat4, v: Vec3): Vec3 = vec3(dot(view.xspace, v), dot(view.yspace, v), dot(view.zspace, v))
+proc forward*(view: Mat4): Vec3 = view.space(vec3(0, 0, 1))
+proc side*(view: Mat4): Vec3 = cross(view.forward(), vec3(0, 1, 0))
+
 proc lookat*(eye, target, up: Vec3): Mat4 =
-  var
+  let
     z = normal(eye - target)
     x = normal(cross(up, z))
     y = normal(cross(z, x))
-  result = identity()
+  result = Mat4()
   result.m = [
-    x.d[0].GLfloat, x.d[1],   x.d[2],   0,
-    y.d[0],  y.d[1],   y.d[2],   0,
-    z.d[0],  z.d[1],   z.d[2], 0,
+    x[0].GLfloat, x[1], x[2], 0,
+    y[0],         y[1], y[2], 0,
+    z[0],         z[1], z[2], 0,
     dot(x, eye), dot(y, eye), -dot(z, eye), 1
   ]
 

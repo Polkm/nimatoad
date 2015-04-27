@@ -49,17 +49,13 @@ proc keyInput( evt: KeyboardEventPtr ) =
   if evt.keysym.sym == K_SPACE:
     echo("You pressed Space")
   if evt.keysym.sym == K_W:
-    cameraEye(camera.pos + vec3(0, 0, 1), camera.pitch, camera.yaw)
-    # cameraPoint(camera.pos + vec3(0, 0, 1), vec3(0, 0, 0))
+    moveEyeForward(1.0)
   if evt.keysym.sym == K_S:
-    cameraEye(camera.pos + vec3(0, 0, -1), camera.pitch, camera.yaw)
-    # cameraPoint(camera.pos + vec3(0, 0, -1), vec3(0, 0, 0))
+    moveEyeForward(-1.0)
   if evt.keysym.sym == K_D:
-    cameraEye(camera.pos + vec3(-1, 0, 0), camera.pitch, camera.yaw)
-    # cameraPoint(camera.pos + vec3(1, 0, 0), vec3(0, 0, 0))
+    moveEyeSide(1.0)
   if evt.keysym.sym == K_A:
-    cameraEye(camera.pos + vec3(1, 0, 0), camera.pitch, camera.yaw)
-    # cameraPoint(camera.pos + vec3(-1, 0, 0), vec3(0, 0, 0))
+    moveEyeSide(-1.0)
   if evt.keysym.sym == K_UP:
     cameraEye(camera.pos, camera.pitch + 3, camera.yaw)
   if evt.keysym.sym == K_DOWN:

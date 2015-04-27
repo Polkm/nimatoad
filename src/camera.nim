@@ -19,6 +19,11 @@ proc cameraEye*(eye: Vec3, p, y: float32) =
   view = identity().rotate(yaw, vec3(0, 1, 0)).rotate(pitch, vec3(1, 0, 0)) * identity().translate(eye)
 cameraEye(pos, pitch, yaw)
 
+proc moveEyeForward*(amount: float) =
+  cameraEye(camera.pos + view.forward() * amount, camera.pitch, camera.yaw)
+proc moveEyeSide*(amount: float) =
+  cameraEye(camera.pos + view.side() * amount, camera.pitch, camera.yaw)
+
 proc cameraAspect*(aspect: float) =
   proj = perspective(fov = 40.0, aspect = aspect, near = 0.05, far = 10000.0)
 

@@ -42,6 +42,7 @@ proc `/=`*(a: var Vec3, s: float) =
 proc `+`*(a, b: Vec3): Vec3 = vec3(a[0] + b[0], a[1] + b[1], a[2] + b[2])
 proc `-`*(a, b: Vec3): Vec3 = vec3(a[0] - b[0], a[1] - b[1], a[2] - b[2])
 proc `*`*(a, b: Vec3): Vec3 = vec3(a[0] * b[0], a[1] * b[1], a[2] * b[2])
+proc `*`*(a: Vec3, s: float): Vec3 = vec3(a[0] * s, a[1] * s, a[2] * s)
 proc `/`*(a, b: Vec3): Vec3 = vec3(a[0] / b[0], a[1] / b[1], a[2] / b[2])
 proc `$`*(v: Vec3): string = "(" & $v[0] & ", " & $v[1] & ", " & $v[2] & ")"
 proc `&`*(s: string, v: Vec3): string = s & $v
