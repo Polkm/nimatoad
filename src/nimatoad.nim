@@ -16,12 +16,12 @@ station.program = phong
 station.material = mat
 station.mesh = msh
 
-var pane = newPanel(0,240,100,100)
+var pane = newPanel(50,50,100,100)
 pane.textureID = parseBmp("bmps/notbadd.bmp")
 
 proc z(): proc( x,y,w,h: float ) =
   var
-    col = 0
+    col = 55
     pitch = 0.0.float
     yaw = -45.0.float
     roll = 0.0.float
@@ -31,16 +31,12 @@ proc z(): proc( x,y,w,h: float ) =
     progress = 1000
   return proc( x,y,w,h: float ) =
 
-    glRotatef( pitch, 1.0, 0, 0 )
-    glRotatef( yaw, 0, 1.0, 0 )
-    glRotatef( roll, 0, 0, 1.0 )
-    glTranslatef( xPos + x * -1, yPos + y * 1, zPos )
+    #glRotatef( pitch, 1.0, 0, 0 )
+    #glRotatef( yaw, 0, 1.0, 0 )
+    #glRotatef( roll, 0, 0, 1.0 )
+    #glTranslatef( xPos + x * -1, yPos + y * 1, zPos )
 
     gui.setColor( col, 255, 255, col )
-    col = col + 1
-    if (col >= 255) :
-      col = col - 255
-
     gui.trect(x + (w * 0.25),y - (h * 0.25),w * 0.5,h *0.5, pane.textureID)
     glTranslatef( 0.0, 0.0,0.001 )
     gui.setColor( 100, 0, 0, col )

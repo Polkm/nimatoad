@@ -19,6 +19,7 @@ type
     height*: float
     textureID*: GLuint #if it has a texture
     drawFunc*: proc( x,y,width,height: float )#this is the function to call to draw it
+    visible*: bool
 
 let scrW = 640
 let scrH = 480
@@ -36,7 +37,7 @@ proc newPanel*( x,y,width,height: float ): ref panel =
   newP.y = y/(-scrH/2) + 1 # corrects it so that the origin is the top left
   newP.width = width/(scrW/2)
   newP.height = height/(scrH/2)
-
+  newP.visible = true
   newP.textureID = 0
 
   newP.drawFunc = default()
@@ -50,9 +51,10 @@ proc panelsDraw*(): proc() =
     glUseProgram(0) # make sure we don't mess with the custom shader
     var cur: ref panel
     for i in low(pTable)..high(pTable):
-      glLoadIdentity()
       cur = pTable[i]
-      cur.drawFunc( cur.x, cur.y, cur.width, cur.height )
+      if (cur.visible) :
+        glLoadIdentity()
+        cur.drawFunc( cur.x, cur.y, cur.width, cur.height )
 
 #Panel I/O
 proc panelsMouseInput*( button: int, pressed: bool, x,y:float ) =
