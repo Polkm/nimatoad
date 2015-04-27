@@ -10,7 +10,8 @@ var mat = initMaterial("bmps/rock1.bmp")
 var msh = initMesh("models/astroid2.obj", phong.handle)
 
 var station = newModel()
-station.matrix = station.matrix.rotate(60, vec3(0, 0, 1))
+station.matrix = station.matrix.translate(vec3(0, 0, -6))
+# station.matrix = station.matrix.rotate(60, vec3(0, 0, 1))
 station.program = phong
 station.material = mat
 station.mesh = msh

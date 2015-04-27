@@ -5,11 +5,13 @@ import vector
 type Mat4* = object
   m*: array[16, GLfloat]
 
+proc `[]`*(m: Mat4, i: int): GLfloat = m.m[i]
+proc `[]=`*(m: var Mat4, i: int, v: GLfloat) = m.m[i] = v
 proc `$`*(x: Mat4): string =
-  "[" & $x.m[0] & ", " & $x.m[1] & ", " & $x.m[2] & ", " & $x.m[3] & "\n " &
-        $x.m[4] & ", " & $x.m[5] & ", " & $x.m[6] & ", " & $x.m[7] & "\n " &
-        $x.m[8] & ", " & $x.m[9] & ", " & $x.m[10] & ", " & $x.m[11] & "\n " &
-        $x.m[12] & ", " & $x.m[13] & ", " & $x.m[14] & ", " & $x.m[15] & "]"
+  "[" & $x[0] & ", " & $x[1] & ", " & $x[2] & ", " & $x[3] & "\n " &
+        $x[4] & ", " & $x[5] & ", " & $x[6] & ", " & $x[7] & "\n " &
+        $x[8] & ", " & $x[9] & ", " & $x[10] & ", " & $x[11] & "\n " &
+        $x[12] & ", " & $x[13] & ", " & $x[14] & ", " & $x[15] & "]"
 
 proc mat4*(m: Mat4): Mat4 =
   result = Mat4()
@@ -17,7 +19,7 @@ proc mat4*(m: Mat4): Mat4 =
 
 proc identity*(): Mat4 =
   result = Mat4()
-  result.m = [1.0f32, 0.0, 0.0, 0.0,
+  result.m = [1.0'f32, 0.0, 0.0, 0.0,
               0.0, 1.0, 0.0, 0.0,
               0.0, 0.0, 1.0, 0.0,
               0.0, 0.0, 0.0, 1.0]
@@ -27,7 +29,7 @@ proc perspective*(fov, aspect, near, far: GLfloat): Mat4 =
     yScale = 1.0 / tan((PI / 180.0) * fov / 2.0)
     xScale = yScale / aspect
     nearmfar = near - far
-  result = identity()
+  result = Mat4()
   result.m = [
     xScale.float32, 0, 0, 0,
     0, yScale, 0, 0,
@@ -37,45 +39,102 @@ proc perspective*(fov, aspect, near, far: GLfloat): Mat4 =
 
 proc translate*(m: Mat4, pos: Vec3): Mat4 =
   var
-    x = vec3(m.m[0], m.m[1], m.m[2])
-    y = vec3(m.m[4], m.m[5], m.m[6])
-    z = vec3(m.m[8], m.m[9], m.m[10])
-    w = vec3(m.m[12], m.m[13], m.m[14])
+    x = vec3(m[0], m[1], m[2])
+    y = vec3(m[4], m[5], m[6])
+    z = vec3(m[8], m[9], m[10])
+    w = vec3(m[12], m[13], m[14])
   result = mat4(m)
-  result.m[12] = m.m[12] + dot(x, pos)
-  result.m[13] = m.m[13] + dot(y, pos)
-  result.m[14] = m.m[14] + dot(z, pos)
-  result.m[15] = m.m[15] + dot(w, pos)
+  result[12] = m[12] + dot(x, pos)
+  result[13] = m[13] + dot(y, pos)
+  result[14] = m[14] + dot(z, pos)
+  result[15] = m[15] + dot(w, pos)
 
 proc rotate*(m: Mat4, angle: float32, axis: Vec3): Mat4 =
   result = mat4(m)
   var
+    len = axis.length()
+    x = axis[0]
+    y = axis[1]
+    z = axis[2]
+  if (len > 1):
+    x /= len
+    y /= len
+    z /= len
+  var
     theta = angle * PI / 180.0
-    tcos = cos(theta)
-    tsin = sin(theta)
-    x = axis.d[0]
-    y = axis.d[1]
-    z = axis.d[2]
-    x2 = x * x
-    y2 = y * y
-    z2 = z * z
-    L2 = x2 + y2 + z2
-    L = sqrt(L2)
+    s = sin(theta)
+    c = cos(theta)
+    t = 1 - c
+    # Cache indexing
+    a00 = m[0]
+    a01 = m[1]
+    a02 = m[2]
+    a03 = m[3]
+    a10 = m[4]
+    a11 = m[5]
+    a12 = m[6]
+    a13 = m[7]
+    a20 = m[8]
+    a21 = m[9]
+    a22 = m[10]
+    a23 = m[11]
+    # Construct the elements of the rotation matrix
+    b00 = x * x * t + c
+    b01 = y * x * t + z * s
+    b02 = z * x * t - y * s
+    b10 = x * y * t - z * s
+    b11 = y * y * t + c
+    b12 = z * y * t + x * s
+    b20 = x * z * t + y * s
+    b21 = y * z * t - x * s
+    b22 = z * z * t + c
+  # Perform rotation-specific matrix multiplication
+  result[0] = a00 * b00 + a10 * b01 + a20 * b02
+  result[1] = a01 * b00 + a11 * b01 + a21 * b02
+  result[2] = a02 * b00 + a12 * b01 + a22 * b02
+  result[3] = a03 * b00 + a13 * b01 + a23 * b02
 
-  result.m[0] = (x2 + (y2 + z2) * tcos) / L2
-  result.m[1] = (x * y * (1 - tcos) - z * L * tsin) / L2
-  result.m[2] = (x * z * (1 - tcos) + y * L * tsin) / L2
-  # result.m[3] = 0.0
+  result[4] = a00 * b10 + a10 * b11 + a20 * b12
+  result[5] = a01 * b10 + a11 * b11 + a21 * b12
+  result[6] = a02 * b10 + a12 * b11 + a22 * b12
+  result[7] = a03 * b10 + a13 * b11 + a23 * b12
 
-  result.m[4] = (x * y * (1 - tcos) + z * L * tsin) / L2
-  result.m[5] = (y2 + (x2 + z2) * tcos) / L2
-  result.m[6] = (y * z * (1 - tcos) - x * L * tsin) / L2
-  # result.m[7] = 0.0
+  result[8] = a00 * b20 + a10 * b21 + a20 * b22
+  result[9] = a01 * b20 + a11 * b21 + a21 * b22
+  result[10] = a02 * b20 + a12 * b21 + a22 * b22
+  result[11] = a03 * b20 + a13 * b21 + a23 * b22
 
-  result.m[8] = (x * z * (1 - tcos) - y * L * tsin) / L2
-  result.m[9] = (y * z * (1 - tcos) + x * L * tsin) / L2
-  result.m[10] = (z2 + (x2 + y2) * tcos) / L2
-  # result.m[11] = 0.0
+
+
+
+
+  # var
+  #   theta = angle * PI / 180.0
+  #   tcos = cos(theta)
+  #   tsin = sin(theta)
+  #   x = axis.d[0]
+  #   y = axis.d[1]
+  #   z = axis.d[2]
+  #   x2 = x * x
+  #   y2 = y * y
+  #   z2 = z * z
+  #   L2 = x2 + y2 + z2
+  #   L = sqrt(L2)
+  #
+  # result[0] = (x2 + (y2 + z2) * tcos) / L2
+  # result[1] = (x * y * (1 - tcos) - z * L * tsin) / L2
+  # result[2] = (x * z * (1 - tcos) + y * L * tsin) / L2
+  # result[3] = 0.0
+
+  # result[4] = (x * y * (1 - tcos) + z * L * tsin) / L2
+  # result[5] = (y2 + (x2 + z2) * tcos) / L2
+  # result[6] = (y * z * (1 - tcos) - x * L * tsin) / L2
+  # result[7] = 0.0
+
+  # result[8] = (x * z * (1 - tcos) - y * L * tsin) / L2
+  # result[9] = (y * z * (1 - tcos) + x * L * tsin) / L2
+  # result[10] = (z2 + (x2 + y2) * tcos) / L2
+  # result[11] = 0.0
 
 proc lookat*(eye, target, up: Vec3): Mat4 =
   var

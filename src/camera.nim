@@ -10,13 +10,14 @@ proc cameraPoint*(eye, target: Vec3) =
   pos = eye
   view = lookat(eye = pos, target = target, up = vec3(0.0, 1.0, 0.0))
   echo($view)
-cameraPoint(pos, vec3(0.0, 0.0, 0.0))
+# cameraPoint(pos, vec3(0.0, 0.0, 0.0))
 
-proc cameraEye*(eye: Vec3, pitch, yaw: float32) =
+proc cameraEye*(eye: Vec3, p, y: float32) =
   pos = eye
-  camera.pitch = pitch
-  camera.yaw = yaw
-  view = identity().rotate(yaw, vec3(0, 1, 0)).rotate(pitch, vec3(1, 0, 0)).translate(eye)
+  camera.pitch = p
+  camera.yaw = y
+  view = identity().translate(eye).rotate(yaw, vec3(0, 1, 0)).rotate(pitch, vec3(1, 0, 0))
+cameraEye(pos, pitch, yaw)
 
 proc cameraAspect*(aspect: float) =
   proj = perspective(fov = 40.0, aspect = aspect, near = 0.05, far = 10000.0)
