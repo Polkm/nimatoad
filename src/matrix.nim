@@ -5,14 +5,6 @@ import vector
 type Mat4* = object
   m*: array[16, GLfloat]
 
-proc `[]`*(m: Mat4, i: int): GLfloat = m.m[i]
-proc `[]=`*(m: var Mat4, i: int, v: GLfloat) = m.m[i] = v
-proc `$`*(x: Mat4): string =
-  "[" & $x[0] & ", " & $x[1] & ", " & $x[2] & ", " & $x[3] & "\n " &
-        $x[4] & ", " & $x[5] & ", " & $x[6] & ", " & $x[7] & "\n " &
-        $x[8] & ", " & $x[9] & ", " & $x[10] & ", " & $x[11] & "\n " &
-        $x[12] & ", " & $x[13] & ", " & $x[14] & ", " & $x[15] & "]"
-
 proc mat4*(m: Mat4): Mat4 =
   result = Mat4()
   result.m = m.m
@@ -23,6 +15,66 @@ proc identity*(): Mat4 =
               0.0, 1.0, 0.0, 0.0,
               0.0, 0.0, 1.0, 0.0,
               0.0, 0.0, 0.0, 1.0]
+
+proc `[]`*(m: Mat4, i: int): GLfloat = m.m[i]
+proc `[]=`*(m: var Mat4, i: int, v: GLfloat) = m.m[i] = v
+proc `*`*(m, n: Mat4): Mat4 =
+  let
+    a00 = m[0]
+    a01 = m[1]
+    a02 = m[2]
+    a03 = m[3]
+    a10 = m[4]
+    a11 = m[5]
+    a12 = m[6]
+    a13 = m[7]
+    a20 = m[8]
+    a21 = m[9]
+    a22 = m[10]
+    a23 = m[11]
+    a30 = m[12]
+    a31 = m[13]
+    a32 = m[14]
+    a33 = m[15]
+    b00 = n[0]
+    b01 = n[1]
+    b02 = n[2]
+    b03 = n[3]
+    b10 = n[4]
+    b11 = n[5]
+    b12 = n[6]
+    b13 = n[7]
+    b20 = n[8]
+    b21 = n[9]
+    b22 = n[10]
+    b23 = n[11]
+    b30 = n[12]
+    b31 = n[13]
+    b32 = n[14]
+    b33 = n[15]
+  result = Mat4()
+  result[0] = b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30
+  result[1] = b00 * a01 + b01 * a11 + b02 * a21 + b03 * a31
+  result[2] = b00 * a02 + b01 * a12 + b02 * a22 + b03 * a32
+  result[3] = b00 * a03 + b01 * a13 + b02 * a23 + b03 * a33
+  result[4] = b10 * a00 + b11 * a10 + b12 * a20 + b13 * a30
+  result[5] = b10 * a01 + b11 * a11 + b12 * a21 + b13 * a31
+  result[6] = b10 * a02 + b11 * a12 + b12 * a22 + b13 * a32
+  result[7] = b10 * a03 + b11 * a13 + b12 * a23 + b13 * a33
+  result[8] = b20 * a00 + b21 * a10 + b22 * a20 + b23 * a30
+  result[9] = b20 * a01 + b21 * a11 + b22 * a21 + b23 * a31
+  result[10] = b20 * a02 + b21 * a12 + b22 * a22 + b23 * a32
+  result[11] = b20 * a03 + b21 * a13 + b22 * a23 + b23 * a33
+  result[12] = b30 * a00 + b31 * a10 + b32 * a20 + b33 * a30
+  result[13] = b30 * a01 + b31 * a11 + b32 * a21 + b33 * a31
+  result[14] = b30 * a02 + b31 * a12 + b32 * a22 + b33 * a32
+  result[15] = b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33
+
+proc `$`*(x: Mat4): string =
+  "[" & $x[0] & ", " & $x[1] & ", " & $x[2] & ", " & $x[3] & "\n " &
+        $x[4] & ", " & $x[5] & ", " & $x[6] & ", " & $x[7] & "\n " &
+        $x[8] & ", " & $x[9] & ", " & $x[10] & ", " & $x[11] & "\n " &
+        $x[12] & ", " & $x[13] & ", " & $x[14] & ", " & $x[15] & "]"
 
 proc perspective*(fov, aspect, near, far: GLfloat): Mat4 =
   var
@@ -44,10 +96,14 @@ proc translate*(m: Mat4, pos: Vec3): Mat4 =
     z = vec3(m[8], m[9], m[10])
     w = vec3(m[12], m[13], m[14])
   result = mat4(m)
-  result[12] = m[12] + dot(x, pos)
-  result[13] = m[13] + dot(y, pos)
-  result[14] = m[14] + dot(z, pos)
-  result[15] = m[15] + dot(w, pos)
+  result[12] = pos[0]
+  result[13] = pos[1]
+  result[14] = pos[2]
+  result[15] = 1
+  # result[12] = m[12] + dot(x, pos)
+  # result[13] = m[13] + dot(y, pos)
+  # result[14] = m[14] + dot(z, pos)
+  # result[15] = m[15] + dot(w, pos)
 
 proc rotate*(m: Mat4, angle: float32, axis: Vec3): Mat4 =
   result = mat4(m)
@@ -103,38 +159,6 @@ proc rotate*(m: Mat4, angle: float32, axis: Vec3): Mat4 =
   result[9] = a01 * b20 + a11 * b21 + a21 * b22
   result[10] = a02 * b20 + a12 * b21 + a22 * b22
   result[11] = a03 * b20 + a13 * b21 + a23 * b22
-
-
-
-
-
-  # var
-  #   theta = angle * PI / 180.0
-  #   tcos = cos(theta)
-  #   tsin = sin(theta)
-  #   x = axis.d[0]
-  #   y = axis.d[1]
-  #   z = axis.d[2]
-  #   x2 = x * x
-  #   y2 = y * y
-  #   z2 = z * z
-  #   L2 = x2 + y2 + z2
-  #   L = sqrt(L2)
-  #
-  # result[0] = (x2 + (y2 + z2) * tcos) / L2
-  # result[1] = (x * y * (1 - tcos) - z * L * tsin) / L2
-  # result[2] = (x * z * (1 - tcos) + y * L * tsin) / L2
-  # result[3] = 0.0
-
-  # result[4] = (x * y * (1 - tcos) + z * L * tsin) / L2
-  # result[5] = (y2 + (x2 + z2) * tcos) / L2
-  # result[6] = (y * z * (1 - tcos) - x * L * tsin) / L2
-  # result[7] = 0.0
-
-  # result[8] = (x * z * (1 - tcos) - y * L * tsin) / L2
-  # result[9] = (y * z * (1 - tcos) + x * L * tsin) / L2
-  # result[10] = (z2 + (x2 + y2) * tcos) / L2
-  # result[11] = 0.0
 
 proc lookat*(eye, target, up: Vec3): Mat4 =
   var
