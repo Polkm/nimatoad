@@ -7,7 +7,7 @@ sdlx.init()
 
 var phong = initProgram("phong.vert", "phong.frag")
 var mat = initMaterial("bmps/rock1.bmp")
-var msh = initMesh("models/astroid2.obj", phong.handle)
+var msh = initMesh("models/astroid1.obj", phong.handle)
 
 var station = newModel()
 station.matrix = station.matrix.rotate(60, vec3(0, 0, 1))
