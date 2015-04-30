@@ -18,7 +18,7 @@ station.material = mat
 station.mesh = msh
 
 addDraw(panelsDraw())
-mainmenu.init()
+#mainmenu.init()
 
 sdlx.run()
 
