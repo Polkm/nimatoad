@@ -1,8 +1,7 @@
-import sdl2, glx, gui, camera, vector, simulator
+import sdl2, glx, gui, camera, vector, simulator, mainmenu
+import global
 
 var windowTitle* = "Nimatoad"
-var screenWidth*: cint = 640
-var screenHeight*: cint = 480
 
 var window*: WindowPtr
 var context*: GlContextPtr
@@ -67,7 +66,8 @@ proc keyInput( evt: KeyboardEventPtr ) =
     cameraEye(camera.pos, camera.pitch, camera.yaw + 3)
   if evt.keysym.sym == K_LEFT:
     cameraEye(camera.pos, camera.pitch, camera.yaw - 3)
-
+  if evt.keysym.sym == K_ESCAPE:
+    mainmenu.pullup()
 
 proc run*() =
   var

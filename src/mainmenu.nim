@@ -1,31 +1,46 @@
 import gui, sdlx, parsers, opengl
 
+var
+  button = newPanel(320-60,385,120,30)
+  pane = newPanel(0,0,640,480)
+  t = 1
 proc init*() =
   var
-    button = newPanel(320-60,385,120,30)
-    pane = newPanel(0,0,640,480)
-    alpha = 255
+    alpha = 255.float
 
-  pane.textureID = parseBmp("bmps/mainmenu.bmp")
+  pane.textureID = parseBmp("bmps/mainmenu/mainmenu.bmp")
+  button.textureID = parseBmp("bmps/mainmenu/playbutton.bmp")
 
-  proc outlined(): proc( x,y,w,h: float ) =
+  proc textured( think: bool, panelref : ref panel ): proc( x,y,w,h: float ) =
     return proc( x,y,w,h: float ) =
-      setColor(200,200,200,alpha)
-      rect( x,y,w,h )
+      setColor(255,255,255,alpha.int)
+      trect( x,y,w,h,panelref.textureID )
+      if (think) :
+        if (t < 0) :
+          alpha = alpha - 10
+          if (alpha <= 0) :
+            alpha = 0
+            pane.visible = false
+            button.visible = false
+        elif (t > 0):
+          alpha = alpha + 15
+          if (alpha >= 255) :
+            alpha = 255
 
-      setColor(85,85,85,alpha)
-      orect( x+2/640,y-2/480,w-4/640,h-4/480 )
 
-      setColor(55,55,55,alpha)
-      orect( x,y,w,h )
+  proc clicked(): proc( but: int, pressed: bool, x,y:float ) =
+    return proc( but: int, pressed: bool, x,y:float ) =
+      t = t * -1
 
-  proc textured(): proc( x,y,w,h: float ) =
-    return proc( x,y,w,h: float ) =
-      setColor(255,255,255,alpha)
-      trect( x,y,w,h,pane.textureID )
+  pane.drawFunc = textured(false, pane)
+  button.drawFunc = textured(true, button)
+  button.doClick = clicked()
 
-  pane.drawFunc = textured()
-  button.drawFunc = outlined()
+
+proc pullup*() =
+  pane.visible = true
+  button.visible = true
+  t = 1
 
 # proc z(): proc( x,y,w,h: float ) =
   # var

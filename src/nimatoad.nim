@@ -22,7 +22,7 @@ shp.material = mat
 shp.mesh = msh
 
 addDraw(panelsDraw())
-# mainmenu.init()
+mainmenu.init()
 
 sdlx.run()
 

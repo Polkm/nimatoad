@@ -1,4 +1,5 @@
 import parsers, opengl, sdl2
+import global
 
 ###########################
 ########GUI STUFF##########
@@ -22,9 +23,6 @@ type
     doClick*: proc( button: int, pressed: bool, x,y: float )
     visible*: bool
 
-let scrW = 640
-let scrH = 480
-
 var pTable*: seq[ref panel] = @[] # panels
 
 proc default(): proc( x,y,width,height: float ) =
@@ -38,10 +36,10 @@ proc defaultClick(): proc( button: int, pressed: bool, x,y: float ) =
 
 proc newPanel*( x,y,width,height: float ): ref panel =
   let newP = new(panel)
-  newP.x = x/(scrW/2) - 1
-  newP.y = y/(-scrH/2) + 1 # corrects it so that the origin is the top left
-  newP.width = width/(scrW/2)
-  newP.height = height/(scrH/2)
+  newP.x = x/(screenWidth/2) - 1
+  newP.y = y/(-screenHeight/2) + 1 # corrects it so that the origin is the top left
+  newP.width = width/(screenWidth/2)
+  newP.height = height/(screenHeight/2)
   newP.visible = true
   newP.textureID = 0
 
@@ -71,13 +69,14 @@ proc panelsMouseInput*( button: int, pressed: bool, x,y:float ) =
 
   for i in low(pTable)..high(pTable):
     cur = pTable[i]
-    xMin = (cur.x + 1) * scrW.float/2
-    xMax = xMin + cur.width * scrW.float/2
-    if ( xMin <= x and xMax >= x ) : #check if its within the panel's x
-      yMin = (cur.y - 1) * -1 * scrH.float/2
-      yMax = yMin + cur.height * scrH.float/2
-      if ( yMin <= y and yMax >= y ) : #check if its within the panel's y
-        cur.doClick( button, pressed, x,y ) # call the do click
+    if (cur.visible) :
+      xMin = (cur.x + 1) * screenWidth.float/2
+      xMax = xMin + cur.width * screenWidth.float/2
+      if ( xMin <= x and xMax >= x ) : #check if its within the panel's x
+        yMin = (cur.y - 1) * -1 * screenHeight.float/2
+        yMax = yMin + cur.height * screenHeight.float/2
+        if ( yMin <= y and yMax >= y ) : #check if its within the panel's y
+          cur.doClick( button, pressed, x,y ) # call the do click
 
 # actual Drawing functions
 var

@@ -2,6 +2,7 @@ import os, times, math, tables, strutils
 import opengl, glu, assimp
 import matrix, vector, pointer_arithm
 import parsers, camera
+import global
 
 # var resources* Table[]
 var draws*: seq[proc()] = @[]
@@ -183,5 +184,7 @@ proc drawScene*() =
     draws[i]()
 
 proc reshape*(width: cint, height: cint) =
+  screenWidth = width
+  screenHeight = height
   glViewport(0, 0, width, height)
   cameraAspect(width.float / height.float)
