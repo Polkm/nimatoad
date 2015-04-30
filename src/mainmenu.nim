@@ -5,12 +5,18 @@ proc init*() =
     button = newPanel(320-60,385,120,30)
     pane = newPanel(0,0,640,480)
     alpha = 255
-  pane.textureID = parseBmp("bmps/mainmenu.bmp")
 
+  pane.textureID = parseBmp("bmps/mainmenu.bmp")
 
   proc outlined(): proc( x,y,w,h: float ) =
     return proc( x,y,w,h: float ) =
-      setColor(155,155,155,alpha)
+      setColor(200,200,200,alpha)
+      rect( x,y,w,h )
+
+      setColor(85,85,85,alpha)
+      orect( x+2/640,y-2/480,w-4/640,h-4/480 )
+
+      setColor(55,55,55,alpha)
       orect( x,y,w,h )
 
   proc textured(): proc( x,y,w,h: float ) =
@@ -19,10 +25,7 @@ proc init*() =
       trect( x,y,w,h,pane.textureID )
 
   pane.drawFunc = textured()
-
-
-
-
+  button.drawFunc = outlined()
 
 proc z(): proc( x,y,w,h: float ) =
   var
@@ -42,7 +45,7 @@ proc z(): proc( x,y,w,h: float ) =
     #glTranslatef( xPos + x * -1, yPos + y * 1, zPos )
 
     gui.setColor( col, 255, 255, col )
-    gui.trect(x + (w * 0.25),y - (h * 0.25),w * 0.5,h *0.5, pane.textureID)
+    #gui.trect(x + (w * 0.25),y - (h * 0.25),w * 0.5,h *0.5, pane.textureID)
     glTranslatef( 0.0, 0.0,0.001 )
     gui.setColor( 100, 0, 0, col )
     gui.orect(x,y,w,h)
