@@ -1,7 +1,7 @@
 import sdlx, glx, matrix, vector
 import gui, mainmenu, parsers, opengl
+import ship, entity
 import model
-
 
 sdlx.init()
 
@@ -9,16 +9,20 @@ var phong = initProgram("phong.vert", "phong.frag")
 var mat = initMaterial("bmps/metal2.bmp")
 var msh = initMesh("models/ship1.obj", phong.handle)
 
-
-var station = newModel()
-station.matrix = station.matrix.translate(vec3(0, 0, -6))
-# station.matrix = station.matrix.rotate(60, vec3(0, 0, 1))
+var station = newShip()
+station.setPos(vec3(0, 0, -6))
 station.program = phong
 station.material = mat
 station.mesh = msh
 
+var shp = newShip()
+shp.setPos(vec3(0, 3, -12))
+shp.program = phong
+shp.material = mat
+shp.mesh = msh
+
 addDraw(panelsDraw())
-#mainmenu.init()
+# mainmenu.init()
 
 sdlx.run()
 
