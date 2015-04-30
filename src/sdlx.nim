@@ -45,6 +45,12 @@ proc mouseInput( evt: MouseButtonEventPtr ) =
 
   #we might not even need type, but i wrote it out anyways. pressing delete is alot easier
 
+proc mouseMotion( evt: MouseMotionEventPtr ) =
+  #Uint8 type;
+  #Uint8 state;
+  #Uint16 x, y;
+  #Sint16 xrel, yrel;
+  cameraEye(camera.pos, camera.pitch + evt.yrel.float, camera.yaw + evt.xrel.float)
 
 #Handles Single Key Input
 proc keyInput( evt: KeyboardEventPtr ) =
@@ -94,6 +100,8 @@ proc run*() =
         keyInput(evt.key)
       if evt.kind == MouseButtonDown or evt.kind == MouseButtonUp :
         mouseInput(evt.button)
+      if evt.kind == MouseMotion :
+        mouseMotion(evt.motion)
 
     simulator.update(dt)
 

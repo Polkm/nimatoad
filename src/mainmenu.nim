@@ -1,7 +1,8 @@
 import gui, sdlx, parsers, opengl
 
 var
-  button = newPanel(320-60,385,120,30)
+  screen = newScreen( 0.0, 0.0, 0.0,   -45.0, -45.0, 0.0 )
+  button = newPanel(320-45,385,90,30)
   pane = newPanel(0,0,640,480)
   t = 1
 proc init*() =
@@ -35,6 +36,8 @@ proc init*() =
   pane.drawFunc = textured(false, pane)
   button.drawFunc = textured(true, button)
   button.doClick = clicked()
+
+
 
 
 proc pullup*() =
