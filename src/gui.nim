@@ -19,6 +19,7 @@ type
     height*: float
     textureID*: GLuint #if it has a texture
     drawFunc*: proc( x,y,width,height: float )#this is the function to call to draw it
+    doClick*: proc( button: int, pressed: bool, x,y: float )
     visible*: bool
 
 let scrW = 640
@@ -31,6 +32,10 @@ proc default(): proc( x,y,width,height: float ) =
     setColor( 255, 255, 255, 255 )
     rect( x, y, width, height )
 
+proc defaultClick(): proc( button: int, pressed: bool, x,y: float ) =
+  return proc( button: int, pressed: bool, x,y: float ) =
+    echo("Clicked")
+
 proc newPanel*( x,y,width,height: float ): ref panel =
   let newP = new(panel)
   newP.x = x/(scrW/2) - 1
@@ -41,6 +46,7 @@ proc newPanel*( x,y,width,height: float ): ref panel =
   newP.textureID = 0
 
   newP.drawFunc = default()
+  newP.doClick =  defaultClick()
 
   pTable.add( newP )
 
@@ -58,8 +64,20 @@ proc panelsDraw*(): proc() =
 
 #Panel I/O
 proc panelsMouseInput*( button: int, pressed: bool, x,y:float ) =
-  echo(x," ",y)
-  echo("clicked")
+  var
+    cur: ref panel
+    xMin,xMax: float
+    yMin,yMax: float
+
+  for i in low(pTable)..high(pTable):
+    cur = pTable[i]
+    xMin = (cur.x + 1) * scrW.float/2
+    xMax = xMin + cur.width * scrW.float/2
+    if ( xMin <= x and xMax >= x ) : #check if its within the panel's x
+      yMin = (cur.y - 1) * -1 * scrH.float/2
+      yMax = yMin + cur.height * scrH.float/2
+      if ( yMin <= y and yMax >= y ) : #check if its within the panel's y
+        cur.doClick( button, pressed, x,y ) # call the do click
 
 # actual Drawing functions
 var
