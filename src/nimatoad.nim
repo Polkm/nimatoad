@@ -1,7 +1,7 @@
 import sdlx, glx, matrix, vector
 import gui, mainmenu, parsers, opengl
-import ship, entity
-import model
+import entity, model, ship
+import math
 
 sdlx.init()
 
@@ -20,6 +20,21 @@ shp.setPos(vec3(0, 3, -12))
 shp.program = phong
 shp.material = mat
 shp.mesh = msh
+
+let rock1Mat = initMaterial("bmps/rock1.bmp")
+let rock2Mat = initMaterial("bmps/rock2.bmp")
+let astroid1Mesh = initMesh("models/astroid1.obj", phong.handle)
+let astroid2Mesh = initMesh("models/astroid2.obj", phong.handle)
+
+for i in 1..50:
+  var astroid = newModel()
+  astroid.setPos(vec3(random(-100.0..100.0), random(-10.0..10.0), random(-100.0..100.0)))
+  astroid.setAngle(vec3(random(0.0..360.0), random(0.0..360.0), random(0.0..360.0)))
+  astroid.program = phong
+  astroid.material = rock1Mat
+  astroid.mesh = astroid1Mesh
+
+
 
 addDraw(panelsDraw())
 mainmenu.init()

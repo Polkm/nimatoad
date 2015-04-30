@@ -16,7 +16,7 @@ proc cameraEye*(eye: Vec3, p, y: float32) =
   pos = eye
   camera.pitch = p
   camera.yaw = y
-  view = identity().rotate(yaw, vec3(0, 1, 0)).rotate(pitch, vec3(1, 0, 0)) * identity().translate(eye)
+  view = identity().rotate(pitch, vec3(1, 0, 0)) * identity().rotate(yaw, vec3(0, 1, 0)) * identity().translate(eye)
 cameraEye(pos, pitch, yaw)
 
 proc moveEyeForward*(amount: float) =
