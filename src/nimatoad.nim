@@ -15,8 +15,14 @@ station.program = phong
 station.material = mat
 station.mesh = msh
 
+var shp = newShip()
+shp.setPos(vec3(0, 3, -12))
+shp.program = phong
+shp.material = mat
+shp.mesh = msh
+
 addDraw(panelsDraw())
-#mainmenu.init()
+# mainmenu.init()
 
 sdlx.run()
 
