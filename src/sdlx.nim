@@ -1,4 +1,4 @@
-import sdl2, glx, gui, camera, vector
+import sdl2, glx, gui, camera, vector, simulator
 
 var windowTitle* = "Nimatoad"
 var screenWidth*: cint = 640
@@ -6,6 +6,8 @@ var screenHeight*: cint = 480
 
 var window*: WindowPtr
 var context*: GlContextPtr
+
+var dt*: float
 
 # Frame rate limiter
 let targetFramePeriod: uint32 = 20 # 20 milliseconds corresponds to 50 fps
@@ -22,6 +24,7 @@ proc init*() =
   context = window.glCreateContext()
   glx.init()
   glx.reshape(screenWidth, screenHeight)
+  dt = 0.0
 
 #Handles Mouse Button Input ( LeftMouse, RightMouse, doesn't handle Mousewheel )
 proc mouseInput( evt: MouseButtonEventPtr ) =
@@ -70,8 +73,12 @@ proc run*() =
   var
     evt = sdl2.defaultEvent
     runGame = true
+    lastTime = getTicks()
 
   while runGame:
+    dt = (getTicks() - lastTime).float / 1000.0
+    lastTime = getTicks()
+
     while pollEvent(evt):
       if evt.kind == QuitEvent:
         runGame = false
@@ -87,6 +94,8 @@ proc run*() =
         keyInput(evt.key)
       if evt.kind == MouseButtonDown or evt.kind == MouseButtonUp :
         mouseInput(evt.button)
+
+    simulator.update(dt)
 
     glx.drawScene()
     window.glSwapWindow()

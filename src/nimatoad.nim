@@ -1,6 +1,6 @@
 import sdlx, glx, matrix, vector
 import gui, parsers, opengl
-import model
+import ship, entity
 
 
 sdlx.init()
@@ -9,12 +9,17 @@ var phong = initProgram("phong.vert", "phong.frag")
 var mat = initMaterial("bmps/metal2.bmp")
 var msh = initMesh("models/ship1.obj", phong.handle)
 
-var station = newModel()
-station.matrix = station.matrix.translate(vec3(0, 0, -6))
-# station.matrix = station.matrix.rotate(60, vec3(0, 0, 1))
+var station = newShip()
+station.setPos(vec3(0, 0, -6))
 station.program = phong
 station.material = mat
 station.mesh = msh
+
+var shp = newShip()
+shp.setPos(vec3(1, 4, -10))
+shp.program = phong
+shp.material = mat
+shp.mesh = msh
 
 var pane = newPanel(50,50,100,100)
 pane.textureID = parseBmp("bmps/notbadd.bmp")
