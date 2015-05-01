@@ -5,6 +5,7 @@ var
   button = newPanel(320-45,385,90,30)
   pane = newPanel(0,0,640,480)
   t = 1
+  open* = false
 proc init*() =
   var
     alpha = 255.float
@@ -32,18 +33,19 @@ proc init*() =
   proc clicked(): proc( but: int, pressed: bool, x,y:float ) =
     return proc( but: int, pressed: bool, x,y:float ) =
       t = t * -1
+      open = false
 
   pane.drawFunc = textured(false, pane)
   button.drawFunc = textured(true, button)
   button.doClick = clicked()
-
-
+  open = true
 
 
 proc pullup*() =
   pane.visible = true
   button.visible = true
   t = 1
+  open = true
 
 # proc z(): proc( x,y,w,h: float ) =
   # var

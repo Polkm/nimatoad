@@ -50,7 +50,8 @@ proc mouseMotion( evt: MouseMotionEventPtr ) =
   #Uint8 state;
   #Uint16 x, y;
   #Sint16 xrel, yrel;
-  cameraEye(camera.pos, camera.pitch + evt.yrel.float, camera.yaw + evt.xrel.float)
+  if (not mainmenu.open):
+    cameraEye(camera.pos, camera.pitch + evt.yrel.float, camera.yaw + evt.xrel.float)
 
 #Handles Single Key Input
 proc keyInput( evt: KeyboardEventPtr ) =
