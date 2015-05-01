@@ -15,14 +15,20 @@ skydome.mesh = initMesh("models/skydome.obj", phong.handle)
 skydome.material = initMaterial("bmps/sky.bmp", "bmps/sky.bmp")
 skydome.setScale(vec3(2000))
 
+var star = newModel()
+star.program = initProgram("phong.vert", "sky.frag")
+star.mesh = initMesh("models/sphere1.obj", phong.handle)
+star.material = initMaterial("bmps/star.bmp", "bmps/star.bmp")
+star.setScale(vec3(20))
+
 var station = newShip()
-station.setPos(vec3(0, 0, -6))
+station.setPos(vec3(50, 0, -6))
 station.program = phong
 station.material = mat
 station.mesh = msh
 
 var shp = newShip()
-shp.setPos(vec3(0, 3, -12))
+shp.setPos(vec3(50, 3, -12))
 shp.program = phong
 shp.material = mat
 shp.mesh = msh
@@ -34,7 +40,9 @@ let astroid2Mesh = initMesh("models/astroid2.obj", phong.handle)
 
 for i in 1..50:
   var astroid = newModel()
-  astroid.setPos(vec3(random(-100.0..100.0), random(-10.0..10.0), random(-100.0..100.0)))
+  let theta = random(0.0..(PI * 2))
+  let dist = random(40.0..200.0)
+  astroid.setPos(vec3(cos(theta) * dist, random(-10.0..10.0), sin(theta) * dist))
   astroid.setAngle(vec3(random(0.0..360.0), random(0.0..360.0), random(0.0..360.0)))
   astroid.setScale(vec3(random(0.5..3.0)))
   astroid.program = phong

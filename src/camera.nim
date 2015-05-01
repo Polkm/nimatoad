@@ -1,6 +1,6 @@
 import opengl, matrix, vector
 
-var pos* = vec3(0, 0, -10)
+var pos* = vec3(0, 0, -50)
 var pitch* = 0.0'f32
 var yaw* = 0.0'f32
 var view = identity()
