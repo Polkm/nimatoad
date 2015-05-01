@@ -1,7 +1,7 @@
 import sdlx, glx, matrix, vector
 import gui, mainmenu, parsers, opengl
 import entity, model, ship
-import math
+import math, camera
 
 sdlx.init()
 
@@ -32,18 +32,20 @@ shp.setPos(vec3(50, 3, -12))
 shp.program = phong
 shp.material = mat
 shp.mesh = msh
+camera.driver = shp
 
 let rock1Mat = initMaterial("bmps/rock1.bmp")
 let rock2Mat = initMaterial("bmps/rock2.bmp")
 let astroid1Mesh = initMesh("models/astroid1.obj", phong.handle)
 let astroid2Mesh = initMesh("models/astroid2.obj", phong.handle)
 
-for i in 1..50:
+for i in 1..200:
   var astroid = newModel()
   let theta = random(0.0..(PI * 2))
-  let dist = random(40.0..200.0)
+  let dist = random(40.0..400.0)
   astroid.setPos(vec3(cos(theta) * dist, random(-10.0..10.0), sin(theta) * dist))
   astroid.setAngle(vec3(random(0.0..360.0), random(0.0..360.0), random(0.0..360.0)))
+  astroid.setAngleVel(vec3(random(0.0..5.0)))
   astroid.setScale(vec3(random(0.5..3.0)))
   astroid.program = phong
   astroid.material = rock1Mat

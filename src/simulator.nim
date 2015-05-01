@@ -1,5 +1,5 @@
-import ship
+import entity, model, ship
 
 proc update*(dt: float) =
-  for sh in ships:
-    sh.update(dt)
+  for ent in entities:
+    ent.update(dt)

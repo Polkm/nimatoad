@@ -1,4 +1,4 @@
-import sdl2, glx, gui, camera, vector, simulator, mainmenu
+import math, sdl2, glx, gui, camera, vector, simulator, mainmenu
 import global
 
 var windowTitle* = "Nimatoad"
@@ -40,7 +40,7 @@ proc mouseInput( evt: MouseButtonEventPtr ) =
   of ButtonX2 : b = 4
   else : b = 5 # unrecognized input
 
-  if (evt.kind == MouseButtonUp) :
+  if (evt.kind == MouseButtonUp):
     panelsMouseInput( b, true, evt.x.float, evt.y.float )
 
   #we might not even need type, but i wrote it out anyways. pressing delete is alot easier
@@ -51,28 +51,28 @@ proc mouseMotion( evt: MouseMotionEventPtr ) =
   #Uint16 x, y;
   #Sint16 xrel, yrel;
   if (not mainmenu.open):
-    cameraEye(camera.pos, camera.pitch + evt.yrel.float, camera.yaw + evt.xrel.float)
+    cameraEye(camera.pos, max(min(camera.pitch + evt.yrel.float, 89.9), -89.9), camera.yaw + evt.xrel.float)
 
 #Handles Single Key Input
 proc keyInput( evt: KeyboardEventPtr ) =
   if evt.keysym.sym == K_SPACE:
     echo("You pressed Space")
-  if evt.keysym.sym == K_W:
-    moveEyeForward(1.0)
-  if evt.keysym.sym == K_S:
-    moveEyeForward(-1.0)
-  if evt.keysym.sym == K_D:
-    moveEyeSide(1.0)
-  if evt.keysym.sym == K_A:
-    moveEyeSide(-1.0)
-  if evt.keysym.sym == K_UP:
-    cameraEye(camera.pos, camera.pitch - 3, camera.yaw)
-  if evt.keysym.sym == K_DOWN:
-    cameraEye(camera.pos, camera.pitch + 3, camera.yaw)
-  if evt.keysym.sym == K_RIGHT:
-    cameraEye(camera.pos, camera.pitch, camera.yaw + 3)
-  if evt.keysym.sym == K_LEFT:
-    cameraEye(camera.pos, camera.pitch, camera.yaw - 3)
+  # if evt.keysym.sym == K_W:
+  #   moveEyeForward(1.0)
+  # if evt.keysym.sym == K_S:
+  #   moveEyeForward(-1.0)
+  # if evt.keysym.sym == K_D:
+  #   moveEyeSide(1.0)
+  # if evt.keysym.sym == K_A:
+  #   moveEyeSide(-1.0)
+  # if evt.keysym.sym == K_UP:
+  #   cameraEye(camera.pos, camera.pitch - 3, camera.yaw)
+  # if evt.keysym.sym == K_DOWN:
+  #   cameraEye(camera.pos, camera.pitch + 3, camera.yaw)
+  # if evt.keysym.sym == K_RIGHT:
+  #   cameraEye(camera.pos, camera.pitch, camera.yaw + 3)
+  # if evt.keysym.sym == K_LEFT:
+  #   cameraEye(camera.pos, camera.pitch, camera.yaw - 3)
   if evt.keysym.sym == K_ESCAPE:
     mainmenu.pullup()
 

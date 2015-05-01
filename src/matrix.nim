@@ -70,6 +70,12 @@ proc `*`*(m, n: Mat4): Mat4 =
   result[14] = b30 * a02 + b31 * a12 + b32 * a22 + b33 * a32
   result[15] = b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33
 
+proc `*`*(m: Mat4, v: Vec3): Vec3 =
+  let x = m[0] * v[0] + m[4] * v[1] + m[8] * v[2] + m[12]
+  let y = m[1] * v[0] + m[5] * v[1] + m[9] * v[2] + m[13]
+  let z = m[2] * v[0] + m[6] * v[1] + m[10] * v[2] + m[14]
+  vec3(x, y, z)
+
 proc `$`*(x: Mat4): string =
   "[" & $x[0] & ", " & $x[1] & ", " & $x[2] & ", " & $x[3] & "\n " &
         $x[4] & ", " & $x[5] & ", " & $x[6] & ", " & $x[7] & "\n " &
@@ -179,8 +185,9 @@ proc xspace*(view: Mat4): Vec3 = vec3(view[0], view[1], view[2])
 proc yspace*(view: Mat4): Vec3 = vec3(view[4], view[5], view[6])
 proc zspace*(view: Mat4): Vec3 = vec3(view[8], view[9], view[10])
 proc space*(view: Mat4, v: Vec3): Vec3 = vec3(dot(view.xspace, v), dot(view.yspace, v), dot(view.zspace, v))
-proc forward*(view: Mat4): Vec3 = view.space(vec3(0, 0, 1))
+proc forward*(view: Mat4): Vec3 = normal(view.space(vec3(0, 0, 1)))
 proc side*(view: Mat4): Vec3 = cross(view.forward(), vec3(0, 1, 0))
+proc up*(view: Mat4): Vec3 = cross(view.forward(), view.side()) * -1
 
 proc lookat*(eye, target, up: Vec3): Mat4 =
   let
