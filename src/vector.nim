@@ -7,6 +7,8 @@ proc vec3*(x, y, z: float): Vec3 =
   result = Vec3()
   result.d = [x, y, z]
 
+proc vec3*(f: float): Vec3 = vec3(f, f, f)
+
 proc vec3*(v: Vec3): Vec3 =
   result = Vec3()
   result.d = v.d

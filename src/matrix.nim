@@ -89,6 +89,21 @@ proc perspective*(fov, aspect, near, far: GLfloat): Mat4 =
     0, 0, 2 * far * near / nearmfar, 0
   ]
 
+proc scale*(m: Mat4, scale: Vec3): Mat4 =
+  result = mat4(m)
+  result[0] = m[0] * scale[0]
+  result[1] = m[1] * scale[0]
+  result[2] = m[2] * scale[0]
+  result[3] = m[3] * scale[0]
+  result[4] = m[4] * scale[1]
+  result[5] = m[5] * scale[1]
+  result[6] = m[6] * scale[1]
+  result[7] = m[7] * scale[1]
+  result[8] = m[8] * scale[2]
+  result[9] = m[9] * scale[2]
+  result[10] = m[10] * scale[2]
+  result[11] = m[11] * scale[2]
+
 proc translate*(m: Mat4, pos: Vec3): Mat4 =
   var
     x = vec3(m[0], m[1], m[2])
