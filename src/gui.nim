@@ -1,4 +1,4 @@
-import parsers, opengl, sdl2
+import parsers, opengl, sdl2, camera, vector, math
 import global
 
 ###########################
@@ -79,17 +79,23 @@ proc newScreen*( xPos,yPos,zPos,pitch,yaw,roll: float, shouldAdd = true ): ref s
 
 mainScreen = newScreen(0.0, 0.0, 0.0,  0.0, 0.0, 0.0)
 
+proc dist( x1,x2,y1,y2: float ): float =
+  return sqrt( (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) )
+
 proc panelsDraw*(): proc() =
   return proc() =
+    glDisable(GL_CULL_FACE)
     glUseProgram(0) # make sure we don't mess with the custom shader
     var curS: ref screen3d
     for i in low(sTable)..high(sTable):
       curS = sTable[i]
+
       glLoadIdentity()
       glRotatef( curS.pitch, 1.0, 0, 0 )
       glRotatef( curS.yaw, 0, 1.0, 0 )
       glRotatef( curS.roll, 0, 0, 1.0 )
       glTranslatef( curS.xPos, curS.yPos, curS.zPos )
+
       var cur: ref panel
       for i in low(curS.pTable)..high(curS.pTable):
         cur = curS.pTable[i]

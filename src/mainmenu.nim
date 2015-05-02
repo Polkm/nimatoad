@@ -1,11 +1,33 @@
-import gui, sdlx, parsers, opengl
+import gui, sdlx, parsers, opengl, camera, global, math
 
 var
-  screen = newScreen( 0.0, 0.0, 0.0,   -45.0, -45.0, 0.0 )
   button = newPanel(320-45,385,90,30)
   pane = newPanel(0,0,640,480)
   t = 1
   open* = false
+  helmetopen = false
+
+
+#COCK PIT STUFF
+
+var
+  screen1 = newScreen( 0.0, -1.5, 0.0,   -25.0, -45.0, 0.0 )
+  screen2 = newScreen( 0.0, 0.0, 0.0,   0.0, 0.0, 0.0 )
+  screen3 = newScreen( 2.0, -1.4, 0.0,   -25.0, 45.0, 0.0 )
+  pane1 = newPanel(0,0,90,30, screen1)
+  pane2 = newPanel( screenWidth.float - 120 ,screenHeight.float - 40,90,30, screen2)
+  progress = newPanel(0,-20,0,30, screen1)
+
+pane1.visible = false
+pane2.visible = false
+progress.visible = false
+
+proc setHelmet*( b: bool ) =
+  pane1.visible = b
+  pane2.visible = b
+  progress.visible = b
+  helmetopen = b
+
 proc init*() =
   var
     alpha = 255.float
@@ -13,9 +35,12 @@ proc init*() =
   pane.textureID = parseBmp("bmps/mainmenu/mainmenu.bmp")
   button.textureID = parseBmp("bmps/mainmenu/playbutton.bmp")
 
-  proc textured( think: bool, panelref : ref panel ): proc( x,y,w,h: float ) =
+  proc textured( think: bool, panelref : ref panel, alph = true ): proc( x,y,w,h: float ) =
     return proc( x,y,w,h: float ) =
-      setColor(255,255,255,alpha.int)
+      if (alph) :
+        setColor(255,255,255,alpha.int)
+      else :
+        setColor(255,255,255,255)
       trect( x,y,w,h,panelref.textureID )
       if (think) :
         if (t < 0) :
@@ -34,18 +59,69 @@ proc init*() =
     return proc( but: int, pressed: bool, x,y:float ) =
       t = t * -1
       open = false
+      setHelmet(true)
 
   pane.drawFunc = textured(false, pane)
   button.drawFunc = textured(true, button)
   button.doClick = clicked()
   open = true
 
+  var harvesting = false
+  pane1.textureID = parseBmp("bmps/mainmenu/harvestbutton.bmp")
+  pane1.drawFunc = textured(false, pane1, false)
+  proc clk( but: int, pressed: bool, x,y:float ) =
+    harvesting = not harvesting
+
+  pane1.doClick = clk
+
+  pane2.textureID = parseBmp("bmps/mainmenu/resourcesbutton.bmp")
+
+  var vag = 0
+  proc drwT( x,y,w,h: float ) =
+    setColor(255,255,255,255)
+    trect( x,y,w,h,pane2.textureID )
+    vag = vag + 1
+    if ( vag > 270 ) :
+      vag = 0
+    screen3.yaw = 45.0 + 5 * cos(vag/45)
+  pane2.drawFunc = drwT
+
+  var resourceY = 0.0
+  let res = parseBmp("bmps/mainmenu/resource.bmp")
+
+  proc drw( x,y,w,h: float ) =
+    if (helmetopen) :
+      setColor(255,255,255,255)
+      trect( x,y,w,h,res )
+
+  proc progD(): proc( x,y,w,h: float ) =
+    return proc( x,y,w,h: float ) =
+      setColor(0,0,0,255)
+      orect(x,y,w,h)
+      setColor(100,255,100,255)
+      rect(x,y,w,h)
+      if (harvesting) :
+        progress.width = w + 1/screenWidth.float
+        if (progress.width > 90/screenWidth.float * 2 ) :
+          progress.width = 0
+
+          var pan = newPanel(24,-10 + -1 * resourceY,47,30, screen3)
+          pan.textureID = res
+          pan.drawFunc = drw
+          harvesting = false
+          resourceY = resourceY + 40
+
+      progress.height = 30/screenHeight.float
+
+  progress.drawFunc = progD()
 
 proc pullup*() =
   pane.visible = true
   button.visible = true
   t = 1
   open = true
+  setHelmet(false)
+
 
 # proc z(): proc( x,y,w,h: float ) =
   # var
