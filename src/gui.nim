@@ -1,4 +1,4 @@
-import parsers, opengl, sdl2, camera, vector, math
+import parsers, opengl, sdl2, camera, vector, math, entity, matrix
 import global
 
 ###########################
@@ -25,11 +25,12 @@ type
 
   screen3d* = object
     xPos*: float
-    yPos*: float
+    yPos*: float # corrects it so that the origin is the top left
     zPos*: float
     pitch*: float
     yaw*: float
     roll*: float
+    ent*: Entity
     pTable*: seq[ref panel] #this is the function to call to draw it, happens after rotation
 
 var mainScreen: ref screen3d
@@ -63,6 +64,11 @@ proc newPanel*( x,y,width,height: float, addToScreen = mainScreen ): ref panel =
 
 proc newScreen*( xPos,yPos,zPos,pitch,yaw,roll: float, shouldAdd = true ): ref screen3d =
   let newS = new(screen3d)
+  newS.ent = newEntity()
+  discard newS.ent.init()
+  newS.ent.setPos(vec3(xPos, yPos, zPos))
+  newS.ent.setAngle(vec3(pitch, yaw, roll))
+
   newS.xPos = xPos.float
   newS.yPos = yPos.float # corrects it so that the origin is the top left
   newS.zPos = zPos.float
@@ -89,12 +95,18 @@ proc panelsDraw*(): proc() =
     var curS: ref screen3d
     for i in low(sTable)..high(sTable):
       curS = sTable[i]
-
+      glMatrixMode(GL_PROJECTION)
       glLoadIdentity()
-      glRotatef( curS.pitch, 1.0, 0, 0 )
-      glRotatef( curS.yaw, 0, 1.0, 0 )
-      glRotatef( curS.roll, 0, 0, 1.0 )
-      glTranslatef( curS.xPos, curS.yPos, curS.zPos )
+      glLoadMatrixf(camera.proj.m[0].addr)
+
+      glMatrixMode(GL_MODELVIEW)
+      glLoadIdentity()
+      var result = (camera.view * curS.ent.matrix)
+      glLoadMatrixf(result.m[0].addr)
+      #glRotatef( curS.pitch, 1.0, 0, 0 )
+      #glRotatef( curS.yaw, 0, 1.0, 0 )
+      #glRotatef( curS.roll, 0, 0, 1.0 )
+      #glTranslatef( curS.xPos, curS.yPos, curS.zPos )
 
       var cur: ref panel
       for i in low(curS.pTable)..high(curS.pTable):
@@ -112,13 +124,21 @@ proc panelsMouseInput*( button: int, pressed: bool, x,y:float ) =
     yMin,yMax: float
   var curS: ref screen3d
   var pixelArray: array[0..3,GLfloat]
+  var pro = perspective(fov = 50.0, aspect = (screenWidth/screenHeight).float, near = 0.05, far = 10000.0)
   for i in low(sTable)..high(sTable):
     curS = sTable[i]
+    glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    glRotatef( curS.pitch, 1.0, 0, 0 )
-    glRotatef( curS.yaw, 0, 1.0, 0 )
-    glRotatef( curS.roll, 0, 0, 1.0 )
-    glTranslatef( curS.xPos, curS.yPos, curS.zPos )
+    glLoadMatrixf(camera.proj.m[0].addr)
+
+    glMatrixMode(GL_MODELVIEW)
+    glLoadIdentity()
+    var result = (camera.view * curS.ent.matrix)
+    glLoadMatrixf(result.m[0].addr)
+    #glRotatef( curS.pitch, 1.0, 0, 0 )
+    #glRotatef( curS.yaw, 0, 1.0, 0 )
+    #glRotatef( curS.roll, 0, 0, 1.0 )
+    #glTranslatef( curS.xPos, curS.yPos, curS.zPos )
     #cheaper method is just compare pixels
     for i in low(curS.pTable)..high(curS.pTable):
       cur = curS.pTable[i]
