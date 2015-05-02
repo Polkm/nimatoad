@@ -110,38 +110,19 @@ proc scale*(m: Mat4, scale: Vec3): Mat4 =
   result[10] = m[10] * scale[2]
   result[11] = m[11] * scale[2]
 
-proc translate*(m: Mat4, pos: Vec3): Mat4 =
-  var
-    x = vec3(m[0], m[1], m[2])
-    y = vec3(m[4], m[5], m[6])
-    z = vec3(m[8], m[9], m[10])
-    w = vec3(m[12], m[13], m[14])
+proc translate*(m: Mat4, v: Vec3): Mat4 =
   result = mat4(m)
-  result[12] = pos[0]
-  result[13] = pos[1]
-  result[14] = pos[2]
-  result[15] = 1
-  # result[12] = m[12] + dot(x, pos)
-  # result[13] = m[13] + dot(y, pos)
-  # result[14] = m[14] + dot(z, pos)
-  # result[15] = m[15] + dot(w, pos)
+  result[12] = m[0] * v[0] + m[4] * v[1] + m[8] * v[2] + m[12]
+  result[13] = m[1] * v[0] + m[5] * v[1] + m[9] * v[2] + m[13]
+  result[14] = m[2] * v[0] + m[6] * v[1] + m[10] * v[2] + m[14]
+  result[15] = m[3] * v[0] + m[7] * v[1] + m[11] * v[2] + m[15]
 
 proc rotate*(m: Mat4, angle: float32, axis: Vec3): Mat4 =
-  result = mat4(m)
-  var
-    len = axis.length()
-    x = axis[0]
-    y = axis[1]
-    z = axis[2]
-  if (len > 1):
-    x /= len
-    y /= len
-    z /= len
-  var
-    theta = angle * PI / 180.0
-    s = sin(theta)
-    c = cos(theta)
-    t = 1 - c
+  let
+    a = angle * PI / 180.0
+    c = cos(a)
+    s = sin(a)
+    temp = axis * (1.0 - c)
     # Cache indexing
     a00 = m[0]
     a01 = m[1]
@@ -156,30 +137,89 @@ proc rotate*(m: Mat4, angle: float32, axis: Vec3): Mat4 =
     a22 = m[10]
     a23 = m[11]
     # Construct the elements of the rotation matrix
-    b00 = x * x * t + c
-    b01 = y * x * t + z * s
-    b02 = z * x * t - y * s
-    b10 = x * y * t - z * s
-    b11 = y * y * t + c
-    b12 = z * y * t + x * s
-    b20 = x * z * t + y * s
-    b21 = y * z * t - x * s
-    b22 = z * z * t + c
+    r00 = c + temp[0] * axis[0]
+    r01 = 0 + temp[0] * axis[1] + s * axis[2]
+    r02 = 0 + temp[0] * axis[2] - s * axis[1]
+
+    r10 = 0 + temp[1] * axis[0] - s * axis[2]
+    r11 = c + temp[1] * axis[1]
+    r12 = 0 + temp[1] * axis[2] + s * axis[0]
+
+    r20 = 0 + temp[2] * axis[0] + s * axis[1]
+    r21 = 0 + temp[2] * axis[1] - s * axis[0]
+    r22 = c + temp[2] * axis[2]
+
+  result = Mat4()
   # Perform rotation-specific matrix multiplication
-  result[0] = a00 * b00 + a10 * b01 + a20 * b02
-  result[1] = a01 * b00 + a11 * b01 + a21 * b02
-  result[2] = a02 * b00 + a12 * b01 + a22 * b02
-  result[3] = a03 * b00 + a13 * b01 + a23 * b02
+  result.m = [
+    float32 a00 * r00 + a10 * r01 + a20 * r02,
+    a01 * r00 + a11 * r01 + a21 * r02,
+    a02 * r00 + a12 * r01 + a22 * r02,
+    a03 * r00 + a13 * r01 + a23 * r02,
 
-  result[4] = a00 * b10 + a10 * b11 + a20 * b12
-  result[5] = a01 * b10 + a11 * b11 + a21 * b12
-  result[6] = a02 * b10 + a12 * b11 + a22 * b12
-  result[7] = a03 * b10 + a13 * b11 + a23 * b12
+    a00 * r10 + a10 * r11 + a20 * r12,
+    a01 * r10 + a11 * r11 + a21 * r12,
+    a02 * r10 + a12 * r11 + a22 * r12,
+    a03 * r10 + a13 * r11 + a23 * r12,
 
-  result[8] = a00 * b20 + a10 * b21 + a20 * b22
-  result[9] = a01 * b20 + a11 * b21 + a21 * b22
-  result[10] = a02 * b20 + a12 * b21 + a22 * b22
-  result[11] = a03 * b20 + a13 * b21 + a23 * b22
+    a00 * r20 + a10 * r21 + a20 * r22,
+    a01 * r20 + a11 * r21 + a21 * r22,
+    a02 * r20 + a12 * r21 + a22 * r22,
+    a03 * r20 + a13 * r21 + a23 * r22,
+    m[12],
+    m[13],
+    m[14],
+    m[15]
+  ]
+  # result[0] = m[0] * r00 + m[1] * r01 + m[2] * r02
+  # result[1] = m[0] * r10 + m[1] * r11 + m[2] * r12
+  # result[2] = m[0] * r20 + m[1] * r21 + m[2] * r22
+  # result[3] = m[3]
+  return result
+  #
+  #
+  #
+  #
+  # result = mat4(m)
+  # var
+  #   len = axis.length()
+  #   x = axis[0]
+  #   y = axis[1]
+  #   z = axis[2]
+  # if (len > 1):
+  #   x /= len
+  #   y /= len
+  #   z /= len
+  # var
+  #   theta = angle * PI / 180.0
+  #   s = sin(theta)
+  #   c = cos(theta)
+  #   t = 1 - c
+  #
+  #   b00 = x * x * t + c
+  #   b01 = y * x * t + z * s
+  #   b02 = z * x * t - y * s
+  #   b10 = x * y * t - z * s
+  #   b11 = y * y * t + c
+  #   b12 = z * y * t + x * s
+  #   b20 = x * z * t + y * s
+  #   b21 = y * z * t - x * s
+  #   b22 = z * z * t + c
+  #
+  # result[0] = a00 * b00 + a10 * b01 + a20 * b02
+  # result[1] = a01 * b00 + a11 * b01 + a21 * b02
+  # result[2] = a02 * b00 + a12 * b01 + a22 * b02
+  # result[3] = a03 * b00 + a13 * b01 + a23 * b02
+  #
+  # result[4] = a00 * b10 + a10 * b11 + a20 * b12
+  # result[5] = a01 * b10 + a11 * b11 + a21 * b12
+  # result[6] = a02 * b10 + a12 * b11 + a22 * b12
+  # result[7] = a03 * b10 + a13 * b11 + a23 * b12
+  #
+  # result[8] = a00 * b20 + a10 * b21 + a20 * b22
+  # result[9] = a01 * b20 + a11 * b21 + a21 * b22
+  # result[10] = a02 * b20 + a12 * b21 + a22 * b22
+  # result[11] = a03 * b20 + a13 * b21 + a23 * b22
 
 proc xspace*(view: Mat4): Vec3 = vec3(view[0], view[1], view[2])
 proc yspace*(view: Mat4): Vec3 = vec3(view[4], view[5], view[6])

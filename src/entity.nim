@@ -26,11 +26,14 @@ method untrack*(this: Entity) =
 # Recalculates the transform matrix.
 method calcMatrix(this: Entity) =
   this.matrix = identity()
-  this.matrix = this.matrix.scale(this.scale)
-  this.matrix = this.matrix.rotate(this.angle[0], vec3(1, 0, 0))
-  this.matrix = this.matrix.rotate(this.angle[1], vec3(0, 1, 0))
-  this.matrix = this.matrix.rotate(this.angle[2], vec3(0, 0, 1))
   this.matrix = this.matrix.translate(this.pos)
+  this.matrix = this.matrix.scale(this.scale)
+  this.matrix = this.matrix.rotate(this.angle[2], vec3(0, 0, 1))
+  this.matrix = this.matrix.rotate(this.angle[1], vec3(0, 1, 0))
+  this.matrix = this.matrix.rotate(this.angle[0], vec3(1, 0, 0))
+
+
+
 
 # Sets the pos of the entity
 method setPos*(this: Entity, v: Vec3) =

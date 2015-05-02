@@ -64,7 +64,6 @@ proc init*() =
   pane.drawFunc = textured(false, pane)
   button.drawFunc = textured(true, button)
   button.doClick = clicked()
-  open = true
 
   var harvesting = false
   pane1.textureID = parseBmp("bmps/mainmenu/harvestbutton.bmp")
