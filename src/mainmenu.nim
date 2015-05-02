@@ -33,12 +33,10 @@ proc init*() =
   proc clicked(): proc( but: int, pressed: bool, x,y:float ) =
     return proc( but: int, pressed: bool, x,y:float ) =
       t = t * -1
-      open = false
 
   pane.drawFunc = textured(false, pane)
   button.drawFunc = textured(true, button)
   button.doClick = clicked()
-  open = true
 
 
 proc pullup*() =

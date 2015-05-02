@@ -25,6 +25,8 @@ proc init*() =
   glx.reshape(screenWidth, screenHeight)
   dt = 0.0
 
+  simulator.init()
+
 #Handles Mouse Button Input ( LeftMouse, RightMouse, doesn't handle Mousewheel )
 proc mouseInput( evt: MouseButtonEventPtr ) =
   # handle all the SDL enums in this handler, that way we don't have to include
@@ -55,24 +57,21 @@ proc mouseMotion( evt: MouseMotionEventPtr ) =
 
 #Handles Single Key Input
 proc keyInput( evt: KeyboardEventPtr ) =
-  if evt.keysym.sym == K_SPACE:
-    echo("You pressed Space")
-  # if evt.keysym.sym == K_W:
-  #   moveEyeForward(1.0)
-  # if evt.keysym.sym == K_S:
-  #   moveEyeForward(-1.0)
-  # if evt.keysym.sym == K_D:
-  #   moveEyeSide(1.0)
-  # if evt.keysym.sym == K_A:
-  #   moveEyeSide(-1.0)
-  # if evt.keysym.sym == K_UP:
-  #   cameraEye(camera.pos, camera.pitch - 3, camera.yaw)
-  # if evt.keysym.sym == K_DOWN:
-  #   cameraEye(camera.pos, camera.pitch + 3, camera.yaw)
-  # if evt.keysym.sym == K_RIGHT:
-  #   cameraEye(camera.pos, camera.pitch, camera.yaw + 3)
-  # if evt.keysym.sym == K_LEFT:
-  #   cameraEye(camera.pos, camera.pitch, camera.yaw - 3)
+  var action = ""
+  case evt.kind
+  of KeyDown: action = "start"
+  of KeyUp: action = "stop"
+  else: action = "else"
+  case evt.keysym.sym
+  of K_W: simulator.controlInput("forward", action)
+  of K_S: simulator.controlInput("back", action)
+  of K_A: simulator.controlInput("left", action)
+  of K_D: simulator.controlInput("right", action)
+  of K_UP: simulator.controlInput("up", action)
+  of K_DOWN: simulator.controlInput("down", action)
+  of K_LEFT: simulator.controlInput("roll_left", action)
+  of K_RIGHT: simulator.controlInput("roll_right", action)
+  else: simulator.controlInput("else", action)
   if evt.keysym.sym == K_ESCAPE:
     mainmenu.pullup()
 
@@ -97,11 +96,11 @@ proc run*() =
           let newHeight = windowEvent.data2
           glx.reshape(newWidth, newHeight)
 
-      if evt.kind == KeyDown or evt.kind == KeyUp :
+      if evt.kind == KeyDown or evt.kind == KeyUp:
         keyInput(evt.key)
-      if evt.kind == MouseButtonDown or evt.kind == MouseButtonUp :
+      if evt.kind == MouseButtonDown or evt.kind == MouseButtonUp:
         mouseInput(evt.button)
-      if evt.kind == MouseMotion :
+      if evt.kind == MouseMotion:
         mouseMotion(evt.motion)
 
     simulator.update(dt)
