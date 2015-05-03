@@ -60,7 +60,7 @@ proc init*() =
     var right = vec3(playerShip.matrix.m[0],playerShip.matrix.m[1],playerShip.matrix.m[2])
     var up = vec3(playerShip.matrix.m[4],playerShip.matrix.m[5],playerShip.matrix.m[6])
     var newPos = playerShip.pos + forward * screen1.xPos + up * screen1.yPos + right * screen1.zPos
-    screen1.ent.matrix = screen1.ent.matrix * newPos
+    screen1.ent.setPos(newPos)
 
     setColor(255,255,255,255)
     trect( x,y,w,h,harvest.textureID )
