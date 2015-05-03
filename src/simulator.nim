@@ -33,12 +33,6 @@ proc init*() =
   star.material = initMaterial("bmps/star.bmp", "bmps/star.bmp")
   star.setScale(vec3(20))
 
-  var station = newShip()
-  station.setPos(vec3(50, 0, -6))
-  station.program = phong
-  station.material = mat
-  station.mesh = msh
-
   playerShip = newShip()
   playerShip.setPos(vec3(50, 3, -12))
   playerShip.program = phong
@@ -46,22 +40,41 @@ proc init*() =
   playerShip.mesh = msh
   camera.driver = playerShip
 
-  let rock1Mat = initMaterial("bmps/rock1.bmp")
-  let rock2Mat = initMaterial("bmps/rock2.bmp")
-  let astroid1Mesh = initMesh("models/astroid1.obj", phong.handle)
-  let astroid2Mesh = initMesh("models/astroid2.obj", phong.handle)
+  let meshes = @[
+    initMesh("models/astroid1.obj", phong.handle),
+    initMesh("models/astroid2.obj", phong.handle)
+  ]
+  let mats = @[
+    initMaterial("bmps/rock1.bmp"),
+    initMaterial("bmps/rock2.bmp")
+  ]
 
   for i in 1..200:
     var astroid = newModel()
     let theta = random(0.0..(PI * 2))
-    let dist = random(40.0..400.0)
+    let dist = random(40.0..500.0)
     astroid.setPos(vec3(cos(theta) * dist, random(-10.0..10.0), sin(theta) * dist))
     astroid.setAngle(vec3(random(0.0..360.0), random(0.0..360.0), random(0.0..360.0)))
     astroid.setAngleVel(vec3(random(0.0..5.0)))
     astroid.setScale(vec3(random(0.5..3.0)))
     astroid.program = phong
-    astroid.material = rock1Mat
-    astroid.mesh = astroid1Mesh
+    astroid.material = mats[random(0..2)]
+    astroid.mesh = meshes[random(0..2)]
+
+  let stationMeshes = @[
+    initMesh("models/station1.ply", phong.handle),
+    initMesh("models/rings1.obj", phong.handle)
+  ]
+  for i in 1..3:
+    var station = newModel()
+    let theta = random(0.0..(PI * 2))
+    let dist = random(100.0..600.0)
+    station.setPos(vec3(cos(theta) * dist, random(-10.0..10.0), sin(theta) * dist))
+    station.setAngleVel(vec3(0.0, 2.0, 0))
+    station.setScale(vec3(20.0))
+    station.program = phong
+    station.material = mat
+    station.mesh = stationMeshes[random(0..2)]
 
 proc update*(dt: float) =
   for ent in entities:

@@ -126,6 +126,7 @@ proc panelsDraw*(): proc() =
         if (cur.visible) :
           cur.drawFunc( cur.x, cur.y, cur.width, cur.height )
           glTranslatef(0,0,0.0001) # push the next panel back a bit to stop z fighting
+    glEnable(GL_CULL_FACE)
 
 #Panel I/O
 proc panelsMouseInput*( button: int, pressed: bool, x,y:float ) =
