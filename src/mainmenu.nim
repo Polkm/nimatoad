@@ -7,6 +7,7 @@ var
   pane = newPanel(0,0,640,480)
   t = 1
   open* = true
+  cursor* = true
   harvest = newPanel(100,0,60,20, screen1)
   resources = newPanel(200,0,45,15, screen1)
   resource = newPanel(190,20,16,10, screen1)
@@ -14,6 +15,10 @@ var
   resourceCount = 2
   progress = 0.0
   harvesting = false
+  crosshair = newPanel(320,240,1,1)
+  crosshair.onClick: proc( but: int, pressed: bool, x,y:float ) = proc( but: int, pressed: bool, x,y:float )
+
+
 
 proc addStationMenu( ent: Entity ) =
   var screen = newScreen( ent.pos[0] + 1.0, ent.pos[1] + 22.0, ent.pos[2],   0.0, 0.0, 0.0 )
@@ -67,6 +72,7 @@ proc init*() =
     return proc( but: int, pressed: bool, x,y:float ) =
       t = t * -1
       open = false
+      cursor = false
 
   pane.drawFunc = textured(false, pane)
   button.drawFunc = textured(true, button)
@@ -121,7 +127,7 @@ proc pullup*() =
   button.visible = true
   t = 1
   open = true
-
+  cursor = true
 
 # proc z(): proc( x,y,w,h: float ) =
   # var

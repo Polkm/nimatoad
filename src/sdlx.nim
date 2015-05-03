@@ -43,7 +43,10 @@ proc mouseInput( evt: MouseButtonEventPtr ) =
   else : b = 5 # unrecognized input
 
   if (evt.kind == MouseButtonUp):
-    panelsMouseInput( b, true, evt.x.float, evt.y.float )
+    if (not mainmenu.cursor):
+      panelsMouseInput( b, true, (screenWidth/2).float, (screenHeight/2).float )
+    else :
+      panelsMouseInput( b, true, evt.x.float, evt.y.float )
 
   #we might not even need type, but i wrote it out anyways. pressing delete is alot easier
 
@@ -52,7 +55,7 @@ proc mouseMotion( evt: MouseMotionEventPtr ) =
   #Uint8 state;
   #Uint16 x, y;
   #Sint16 xrel, yrel;
-  if (not mainmenu.open):
+  if (not mainmenu.cursor):
     cameraEye(camera.pos, max(min(camera.pitch + evt.yrel.float, 89.9), -89.9), camera.yaw + evt.xrel.float)
 
 #Handles Single Key Input
@@ -72,6 +75,10 @@ proc keyInput( evt: KeyboardEventPtr ) =
   of K_LEFT: simulator.controlInput("roll_left", action)
   of K_RIGHT: simulator.controlInput("roll_right", action)
   else: simulator.controlInput("else", action)
+
+  if evt.keysym.sym == K_SPACE:
+    if (action == "stop"):
+      mainmenu.cursor = not mainmenu.cursor
 
   if evt.keysym.sym == K_ESCAPE:
     mainmenu.pullup()
