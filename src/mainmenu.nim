@@ -54,7 +54,7 @@ proc init*() =
   button.doClick = clicked()
 
   proc drwH( x,y,w,h: float ) =
-    screen1.ent.setAngle(vec3(playerShip.angle[0] + screen1.pitch,playerShip.angle[1] + screen1.yaw, playerShip.angle[2] + screen1.roll))
+    screen1.ent.setAngle(vec3(-playerShip.angle[0] + screen1.pitch, playerShip.angle[1] + screen1.yaw, playerShip.angle[2] + screen1.roll))
 
     # var forward = vec3(playerShip.matrix.m[8],playerShip.matrix.m[9],playerShip.matrix.m[10])
     # var right = vec3(playerShip.matrix.m[0],playerShip.matrix.m[1],playerShip.matrix.m[2])
