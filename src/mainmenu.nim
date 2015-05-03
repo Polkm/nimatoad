@@ -1,4 +1,5 @@
-import gui, sdlx, parsers, opengl, camera, global, math, entity, simulator, vector, matrix
+import gui, sdlx, parsers, opengl, camera
+import global, math, entity, simulator, vector, matrix
 
 var
   screen1 = newScreen( 0.30, -0.35, -0.5,   -50.0, -180.0, 0.0 )
@@ -13,6 +14,24 @@ var
   resourceCount = 2
   progress = 0.0
   harvesting = false
+
+proc addStationMenu( ent: Entity ) =
+  var screen = newScreen( ent.pos[0] + 1.0, ent.pos[1] + 22.0, ent.pos[2],   0.0, 0.0, 0.0 )
+  var panel = newPanel( 0,0,1600,1600, screen)
+  panel.textureID = parseBmp("bmps/mainmenu/resourcesbutton.bmp")
+
+  proc drw( x,y,w,h: float ) =
+    #screen.ent.setPos(vec3())
+    screen.ent.setAngle(vec3(screen.pitch, screen.yaw, screen.roll))
+    setColor(255,255,255,255)
+    trect( x,y, w,h,panel.textureID )
+    screen.yaw = screen.yaw + 1
+
+  proc harvestClick( but: int, pressed: bool, x,y:float ) =
+    resourceCount = 0
+
+  panel.drawFunc = drw
+  panel.doClick = harvestClick
 
 proc init*() =
   var
@@ -62,9 +81,9 @@ proc init*() =
     trect( x,y,w,h,resources.textureID )
 
   proc drwRs( x,y,w,h: float ) =
-    for i in 0..resourceCount :
+    for i in 1..resourceCount :
       setColor(155,255,155,255)
-      trect( x + (21 * (i mod 4)).float/(640.float/2.0),y - (12 * floor(i.float/4.0)).float/(240.0), w,h,resource.textureID )
+      trect( x + (21 * ((i-1) mod 4)).float/(640.float/2.0),y - (12 * floor((i-1).float/4.0)).float/(240.0), w,h,resource.textureID )
 
   proc drwP( x,y,w,h: float ) =
     let percent = progress/100
@@ -74,12 +93,14 @@ proc init*() =
     rect( x + w * percent,y,w - w * percent,h )
     setColor(255,255,255,255)
     orect( x,y,w,h )
-    progress = progress + 1
-    if (progress >= 100) :
-      progress = 100
-      if (harvesting) :
-        resourceCount = resourceCount + 1
-      harvesting = false
+
+    if (harvesting) :
+      progress = progress + 1
+      if (progress >= 100) :
+        progress = 100
+        if (harvesting) :
+          resourceCount = resourceCount + 1
+        harvesting = false
 
 
   proc harvestClick( but: int, pressed: bool, x,y:float ) =
@@ -92,6 +113,9 @@ proc init*() =
   resources.drawFunc = drwR
   resource.drawFunc = drwRs
   progressBar.drawFunc = drwP
+
+  addStationMenu(fetchStation())
+
 proc pullup*() =
   pane.visible = true
   button.visible = true

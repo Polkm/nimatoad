@@ -15,6 +15,10 @@ proc controlInput*(binding, action: string) =
   of "up": playerShip.upping = action == "start"
   of "down": playerShip.downing = action == "start"
 
+var stationSeq: seq[Entity] = @[]
+
+proc fetchStation*(): Entity =
+  return stationSeq[0]
 
 proc init*() =
   var phong = initProgram("phong.vert", "phong.frag")
@@ -75,6 +79,7 @@ proc init*() =
     station.program = phong
     station.material = mat
     station.mesh = stationMeshes[random(0..2)]
+    stationSeq.add(station)
 
 proc update*(dt: float) =
   for ent in entities:
