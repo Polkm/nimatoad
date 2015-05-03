@@ -55,6 +55,7 @@ proc mouseMotion( evt: MouseMotionEventPtr ) =
   #Uint8 state;
   #Uint16 x, y;
   #Sint16 xrel, yrel;
+  ShowCursor(mainmenu.cursor)
   if (not mainmenu.cursor):
     cameraEye(camera.pos, max(min(camera.pitch + evt.yrel.float, 89.9), -89.9), camera.yaw + evt.xrel.float)
 

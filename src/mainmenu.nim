@@ -16,9 +16,12 @@ var
   progress = 0.0
   harvesting = false
   crosshair = newPanel(320,240,1,1)
-  crosshair.onClick: proc( but: int, pressed: bool, x,y:float ) = proc( but: int, pressed: bool, x,y:float )
 
 
+proc emptyClick( but: int, pressed: bool, x,y:float ) =
+  let x = 0
+
+crosshair.doClick = emptyClick
 
 proc addStationMenu( ent: Entity ) =
   var screen = newScreen( ent.pos[0] + 1.0, ent.pos[1] + 22.0, ent.pos[2],   0.0, 0.0, 0.0 )
