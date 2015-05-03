@@ -1,11 +1,18 @@
-import gui, sdlx, parsers, opengl, camera, global, math, entity, simulator, vector
+import gui, sdlx, parsers, opengl, camera, global, math, entity, simulator, vector, matrix
 
 var
-  screen1 = newScreen( 5.0, 0.0, 0.0,   0.0, 180.0, 0.0 )
-  button = newPanel(320-45,385,90,30,screen1)
-  pane = newPanel(0,0,640,480, screen1)
+  screen1 = newScreen( 0.30, -0.35, -0.5,   -50.0, -180.0, 0.0 )
+  button = newPanel(320-45,385,90,30)
+  pane = newPanel(0,0,640,480)
   t = 1
-  open* = false
+  open* = true
+  harvest = newPanel(100,0,60,20, screen1)
+  resources = newPanel(200,0,45,15, screen1)
+  resource = newPanel(190,20,16,10, screen1)
+  progressBar = newPanel(100,22,60,2, screen1)
+  resourceCount = 2
+  progress = 0.0
+  harvesting = false
 
 proc init*() =
   var
@@ -13,7 +20,10 @@ proc init*() =
 
   pane.textureID = parseBmp("bmps/mainmenu/mainmenu.bmp")
   button.textureID = parseBmp("bmps/mainmenu/playbutton.bmp")
-
+  harvest.textureID = parseBmp("bmps/mainmenu/harvestbutton.bmp")
+  resources.textureID = parseBmp("bmps/mainmenu/resourcesbutton.bmp")
+  resource.textureID = parseBmp("bmps/mainmenu/resource.bmp")
+  progressBar.textureID = parseBmp("bmps/mainmenu/bar.bmp")
   proc textured( think: bool, panelref : ref panel, alph = true ): proc( x,y,w,h: float ) =
     return proc( x,y,w,h: float ) =
       if (alph) :
@@ -22,15 +32,6 @@ proc init*() =
         setColor(255,255,255,255)
       trect( x,y,w,h,panelref.textureID )
       if (think) :
-
-        var n = playerShip.angle
-        echo(n[0])
-        echo(n[1])
-        echo(n[2])
-        echo()
-        var newPos = playerShip.pos + vec3(n[0] * screen1.xPos, n[1] * screen1.yPos, n[2] * screen1.zPos)
-        screen1.ent.setPos(newPos)
-        screen1.ent.setAngle(vec3(playerShip.angle[0] + screen1.pitch,playerShip.angle[1] + screen1.yaw, playerShip.angle[2] + screen1.roll))
         if (t < 0) :
           alpha = alpha - 10
           if (alpha <= 0) :
@@ -52,7 +53,53 @@ proc init*() =
   button.drawFunc = textured(true, button)
   button.doClick = clicked()
 
+  proc drwH( x,y,w,h: float ) =
+    screen1.ent.setAngle(vec3(playerShip.angle[0] + screen1.pitch,playerShip.angle[1] + screen1.yaw, playerShip.angle[2] + screen1.roll))
 
+    var forward = vec3(playerShip.matrix.m[8],playerShip.matrix.m[9],playerShip.matrix.m[10])
+    var right = vec3(playerShip.matrix.m[0],playerShip.matrix.m[1],playerShip.matrix.m[2])
+    var up = vec3(playerShip.matrix.m[4],playerShip.matrix.m[5],playerShip.matrix.m[6])
+    var newPos = playerShip.pos + forward * screen1.xPos + up * screen1.yPos + right * screen1.zPos
+    screen1.ent.setPos(newPos)
+
+    setColor(255,255,255,255)
+    trect( x,y,w,h,harvest.textureID )
+
+  proc drwR( x,y,w,h: float ) =
+    setColor(255,255,255,255)
+    trect( x,y,w,h,resources.textureID )
+
+  proc drwRs( x,y,w,h: float ) =
+    for i in 0..resourceCount :
+      setColor(155,255,155,255)
+      trect( x + (21 * (i mod 4)).float/(640.float/2.0),y - (12 * floor(i.float/4.0)).float/(240.0), w,h,resource.textureID )
+
+  proc drwP( x,y,w,h: float ) =
+    let percent = progress/100
+    setColor(255-(255* percent).int,(255* percent).int,0,255)
+    rect( x,y,w * percent,h )
+    setColor(0,0,0,255)
+    rect( x + w * percent,y,w - w * percent,h )
+    setColor(255,255,255,255)
+    orect( x,y,w,h )
+    progress = progress + 1
+    if (progress >= 100) :
+      progress = 100
+      if (harvesting) :
+        resourceCount = resourceCount + 1
+      harvesting = false
+
+
+  proc harvestClick( but: int, pressed: bool, x,y:float ) =
+    harvesting = not harvesting
+    if (progress >= 100) :
+      progress = 0
+
+  harvest.drawFunc = drwH
+  harvest.doClick = harvestClick
+  resources.drawFunc = drwR
+  resource.drawFunc = drwRs
+  progressBar.drawFunc = drwP
 proc pullup*() =
   pane.visible = true
   button.visible = true

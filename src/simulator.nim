@@ -27,7 +27,6 @@ proc init*() =
   skydome.material = initMaterial("bmps/sky.bmp", "bmps/sky.bmp")
   skydome.setScale(vec3(2000))
 
-
   var station = newShip()
   station.setPos(vec3(50, 0, -6))
   station.program = phong

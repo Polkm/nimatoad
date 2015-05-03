@@ -95,18 +95,20 @@ proc panelsDraw*(): proc() =
     var curS: ref screen3d
     for i in low(sTable)..high(sTable):
       curS = sTable[i]
-      glMatrixMode(GL_PROJECTION)
-      glLoadIdentity()
-      glLoadMatrixf(camera.proj.m[0].addr)
+      if (i != 0) :
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glLoadMatrixf(camera.proj.m[0].addr)
 
-      glMatrixMode(GL_MODELVIEW)
-      glLoadIdentity()
-      var result = (camera.view * curS.ent.matrix)
-      glLoadMatrixf(result.m[0].addr)
-      #glRotatef( curS.pitch, 1.0, 0, 0 )
-      #glRotatef( curS.yaw, 0, 1.0, 0 )
-      #glRotatef( curS.roll, 0, 0, 1.0 )
-      #glTranslatef( curS.xPos, curS.yPos, curS.zPos )
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+        var result = (camera.view * curS.ent.matrix)
+        glLoadMatrixf(result.m[0].addr)
+      else :
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
 
       var cur: ref panel
       for i in low(curS.pTable)..high(curS.pTable):
@@ -127,18 +129,21 @@ proc panelsMouseInput*( button: int, pressed: bool, x,y:float ) =
   var pro = perspective(fov = 50.0, aspect = (screenWidth/screenHeight).float, near = 0.05, far = 10000.0)
   for i in low(sTable)..high(sTable):
     curS = sTable[i]
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()
-    glLoadMatrixf(camera.proj.m[0].addr)
+    if (i != 0) :
+      glMatrixMode(GL_PROJECTION)
+      glLoadIdentity()
+      glLoadMatrixf(camera.proj.m[0].addr)
 
-    glMatrixMode(GL_MODELVIEW)
-    glLoadIdentity()
-    var result = (camera.view * curS.ent.matrix)
-    glLoadMatrixf(result.m[0].addr)
-    #glRotatef( curS.pitch, 1.0, 0, 0 )
-    #glRotatef( curS.yaw, 0, 1.0, 0 )
-    #glRotatef( curS.roll, 0, 0, 1.0 )
-    #glTranslatef( curS.xPos, curS.yPos, curS.zPos )
+      glMatrixMode(GL_MODELVIEW)
+      glLoadIdentity()
+      var result = (camera.view * curS.ent.matrix)
+      glLoadMatrixf(result.m[0].addr)
+    else :
+      glMatrixMode(GL_PROJECTION)
+      glLoadIdentity()
+      glMatrixMode(GL_MODELVIEW)
+      glLoadIdentity()
+
     #cheaper method is just compare pixels
     for i in low(curS.pTable)..high(curS.pTable):
       cur = curS.pTable[i]
@@ -152,11 +157,13 @@ proc panelsMouseInput*( button: int, pressed: bool, x,y:float ) =
 
         setColor(69,96,59,255)
         rect( cur.x,cur.y,cur.width,cur.height )
+        setColor(255,255,255,255)
 
         glReadPixels((GLint) x,(GLint)(screenHeight.float-y-1), (GLsizei) 1,(GLsizei) 1, GL_RGBA, cGL_FLOAT, addr pixelArray[0])
 
         if (pixelArray[0]*255 == 69 and pixelArray[1]*255 == 96 and pixelArray[2]*255 == 59) :
           cur.doClick( button, pressed, x,y ) # call the do click
+
           break
 
 
