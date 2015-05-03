@@ -27,6 +27,12 @@ proc init*() =
   skydome.material = initMaterial("bmps/sky.bmp", "bmps/sky.bmp")
   skydome.setScale(vec3(2000))
 
+  var star = newModel()
+  star.program = initProgram("phong.vert", "sky.frag")
+  star.mesh = initMesh("models/sphere1.obj", phong.handle)
+  star.material = initMaterial("bmps/star.bmp", "bmps/star.bmp")
+  star.setScale(vec3(20))
+
   var station = newShip()
   station.setPos(vec3(50, 0, -6))
   station.program = phong

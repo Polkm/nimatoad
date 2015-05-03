@@ -107,9 +107,11 @@ proc run*() =
         mouseMotion(evt.motion)
 
     simulator.update(dt)
-    
+
     glx.drawScene()
+
     guiDraw()
+
     window.glSwapWindow()
 
     limitFrameRate()
