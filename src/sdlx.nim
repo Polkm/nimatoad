@@ -1,5 +1,5 @@
 import math, sdl2, glx, gui, camera, vector, simulator, mainmenu
-import global
+import global, gui
 
 var windowTitle* = "Nimatoad"
 
@@ -72,9 +72,11 @@ proc keyInput( evt: KeyboardEventPtr ) =
   of K_LEFT: simulator.controlInput("roll_left", action)
   of K_RIGHT: simulator.controlInput("roll_right", action)
   else: simulator.controlInput("else", action)
-  
+
   if evt.keysym.sym == K_ESCAPE:
     mainmenu.pullup()
+
+let guiDraw = panelsDraw()
 
 proc run*() =
   var
@@ -107,6 +109,9 @@ proc run*() =
     simulator.update(dt)
 
     glx.drawScene()
+
+    guiDraw()
+
     window.glSwapWindow()
 
     limitFrameRate()

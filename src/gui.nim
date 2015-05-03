@@ -1,5 +1,5 @@
 import parsers, opengl, sdl2, camera, vector, math, entity, matrix
-import global
+import global, simulator
 
 ###########################
 ########GUI STUFF##########
@@ -102,6 +102,16 @@ proc panelsDraw*(): proc() =
 
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
+
+        curS.ent.setAngle(vec3(-playerShip.angle[0] + curS.pitch, playerShip.angle[1] + curS.yaw, playerShip.angle[2] + curS.roll))
+
+        # var forward = vec3(playerShip.matrix.m[8],playerShip.matrix.m[9],playerShip.matrix.m[10])
+        # var right = vec3(playerShip.matrix.m[0],playerShip.matrix.m[1],playerShip.matrix.m[2])
+        # var up = vec3(playerShip.matrix.m[4],playerShip.matrix.m[5],playerShip.matrix.m[6])
+        # var newPos = playerShip.pos + forward * curS.xPos + up * curS.yPos + right * curS.zPos
+
+        curS.ent.setPos(playerShip.matrix * vec3(curS.zPos, curS.yPos, curS.xPos))
+
         var result = (camera.view * curS.ent.matrix)
         glLoadMatrixf(result.m[0].addr)
       else :
@@ -116,6 +126,7 @@ proc panelsDraw*(): proc() =
         if (cur.visible) :
           cur.drawFunc( cur.x, cur.y, cur.width, cur.height )
           glTranslatef(0,0,0.0001) # push the next panel back a bit to stop z fighting
+    glEnable(GL_CULL_FACE)
 
 #Panel I/O
 proc panelsMouseInput*( button: int, pressed: bool, x,y:float ) =
