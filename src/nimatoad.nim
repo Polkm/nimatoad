@@ -5,7 +5,6 @@ import math, camera
 
 sdlx.init()
 
-addDraw(panelsDraw())
 mainmenu.init()
 
 sdlx.run()
